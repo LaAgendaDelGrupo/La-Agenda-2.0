@@ -829,7 +829,12 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
     </div>
     <button class="btn btn-wa btn-full" style="margin-top:8px" onclick="enviarWAEncargado(modalId)">📲 Enviar al encargado por WhatsApp</button>
     <button class="btn btn-sm btn-full only-oficina" style="margin-top:8px;background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)" onclick="abrirPresupuesto(modalId);closeModal()">Generar presupuesto</button>
-    <button class="btn btn-sm btn-full" style="margin-top:8px" onclick="editarDesdeModal(modalId)">✏️ Editar este evento</button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-sm" style="flex:1" onclick="editarDesdeModal(modalId)">✏️ Editar</button>
+      <button class="btn btn-sm" style="flex:1" onclick="duplicarEvento(modalId)">📋 Duplicar</button>
+      <button class="btn btn-sm" style="flex:1" onclick="verNota(modalId);closeModal()">📝 Nota</button>
+      <button class="btn btn-sm" style="flex:1" onclick="verHistorial(modalId);closeModal()">📜 Historial</button>
+    </div>
   </div>
 </div>
 
