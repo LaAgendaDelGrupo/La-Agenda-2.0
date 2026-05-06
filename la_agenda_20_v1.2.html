@@ -1040,10 +1040,15 @@ function mostrarModalConfirmacionWA(tel, e) {
   if(prev)prev.remove();
 
   var nombre1=e.nombre?e.nombre.split(' ')[0]:'';
+  var rest=restante(e);
+  var metodosPago={efectivo:'en efectivo',tarjeta:'con tarjeta',factura:'por factura',presupuesto:'por transferencia'};
+  var metodoPagoRest=e.pagoRest?metodosPago[e.pagoRest]||e.pagoRest:'';
   var msgTexto='Hola '+nombre1+', te confirmamos tu reserva en '+(e.local||'nuestro local')+'\n'+
     'Fecha: '+fmtD(e.fecha)+(e.horaIni?' · '+e.horaIni+(e.horaFin?' - '+e.horaFin:''):'')+
     '\nPersonas: '+(e.personas||'-')+' pax'+
     (e.tipo?'\nTipo: '+e.tipo:'')+
+    (rest>0?'\n\nImporte pendiente de pago: '+rest.toFixed(2)+' EUR'+( metodoPagoRest?' ('+metodoPagoRest+' en el local el dia del evento)':' (a pagar en el local el dia del evento)'):''+
+    (parseFloat(e.precio)>0&&rest<=0?'\n\nEl pago esta completamente abonado.':''))+
     '\n\nCualquier duda estamos a tu disposicion.\nUn saludo, La Agenda 2.0';
 
   window._waConfirmTel = tel;
