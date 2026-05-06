@@ -1025,7 +1025,7 @@ function nuevoEvento(){editingId=null;['f-nombre','f-tel','f-zona','f-personas',
 function setSort(mode){sortMode=mode;['sort-fecha-desc','sort-fecha-asc','sort-nombre'].forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById('sort-'+mode).classList.add('active');renderHistorial();}
 function cambiarEstadoRapido(id,nuevoEstado){
   var e=eventos.find(function(x){return x.id===id;});if(!e)return;
-  e.estado=nuevoEstado;save();supaUpsertEvento(e);renderHistorial();
+  e.estado=nuevoEstado;save();supaUpsertEvento(e);renderHistorial();renderComunicaciones();renderPanel();
   toast('Estado → '+nuevoEstado+' ✓');
   if(nuevoEstado==='Confirmado'){
     var tel=(e.tel||'').replace(/[^0-9]/g,'');
