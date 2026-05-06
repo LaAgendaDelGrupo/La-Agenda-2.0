@@ -1196,6 +1196,64 @@ function comCopiarGrupo(){const txt=document.getElementById('com-grupo-preview')
 function comAbrirGrupoWA(){const txt=document.getElementById('com-grupo-preview').textContent;window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+// ── DUPLICAR EVENTO ───────────────────────────────────────────────────────────
+function duplicarEvento(id){
+  const e=eventos.find(x=>x.id===id);if(!e)return;
+  editingId=null;
+  const localEl=document.getElementById('f-local');if(localEl)localEl.value=e.local||'';
+  populateEncargados();
+  const m={'f-nombre':e.nombre,'f-tel':e.tel,'f-local':e.local,'f-zona':e.zona,'f-tipo':e.tipo,'f-fecha':'','f-ini':e.horaIni,'f-fin':e.horaFin,'f-personas':e.personas,'f-encargado':e.encargado,'f-tel-encargado':e.telEncargado||'','f-tramitador':e.tramitador,'f-estado':'Pendiente','f-cons':e.cons,'f-cons-otro':e.consOtro||'','f-tickets':e.tickets||'','f-menu':e.menu,'f-obs-cons':e.obsCons,'f-precio':e.precio,'f-senal':'','f-pago-senal':e.pagoSenal,'f-pago-rest':e.pagoRest,'f-obs':e.obs,'f-excl-ini':e.exclIni||'','f-excl-fin':e.exclFin||''};
+  Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val||'';});
+  onEncargadoChange();setExcl(e.exclusividad||'no');limpiarErrores();checkConsOtro();checkAforo();
+  tpvHint('f-pago-senal','hint-senal');tpvHint('f-pago-rest','hint-rest');calcRestante();
+  closeModal();
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('active',i===0));
+  goStep(1);
+  toast('Evento duplicado — ajusta la fecha y señal');
+}
+
+// ── HISTORIAL DE CAMBIOS ──────────────────────────────────────────────────────
+const CAMPO_LABELS={nombre:'Nombre',tel:'Teléfono',local:'Local',zona:'Zona',tipo:'Tipo',fecha:'Fecha',horaIni:'Hora llegada',horaFin:'Hora máx.',personas:'Personas',exclusividad:'Exclusividad',exclIni:'Excl. desde',exclFin:'Excl. hasta',encargado:'Encargado',tramitador:'Tramitador',estado:'Estado',cons:'Consumición',consOtro:'Cons. (otro)',tickets:'Tickets',menu:'Menú',obsCons:'Obs. consumición',precio:'Precio (€)',senal:'Señal (€)',pagoSenal:'Pago señal',pagoRest:'Pago restante',obs:'Observaciones'};
+function getHistorial(eventId){try{const h=JSON.parse(lsGet('g20_historial')||'{}');return h[String(eventId)]||[];}catch(e){return[];}}
+function addHistorialEntry(eventId,entry){try{const h=JSON.parse(lsGet('g20_historial')||'{}'),key=String(eventId);if(!h[key])h[key]=[];h[key].unshift(entry);lsSet('g20_historial',JSON.stringify(h));}catch(e){}}
+function registrarCambios(oldE,newE){
+  if(!oldE||!newE)return;
+  const cambios=[];
+  Object.keys(CAMPO_LABELS).forEach(key=>{const ov=String(oldE[key]||''),nv=String(newE[key]||'');if(ov!==nv)cambios.push(CAMPO_LABELS[key]+': "'+( ov||'—')+'" → "'+(nv||'—')+'"');});
+  if(cambios.length)addHistorialEntry(newE.id,{fecha:fmtNow(),quien:newE.tramitador||'—',cambios});
+}
+function verHistorial(id){
+  const hist=getHistorial(id),content=document.getElementById('hist-content');
+  if(!hist.length){content.innerHTML='<div style="text-align:center;padding:2rem 1rem;color:var(--text3);font-size:13px">Sin cambios registrados.<br><span style="font-size:11px">Se registran al editar y guardar un evento.</span></div>';}
+  else{content.innerHTML=hist.map(h=>'<div class="hist-entry"><div class="hist-entry-head">'+h.fecha+(h.quien&&h.quien!=='—'?' · <strong style="color:var(--text)">'+escHtml(h.quien)+'</strong>':'')+'</div>'+h.cambios.map(c=>'<div class="hist-entry-cambio">'+escHtml(c)+'</div>').join('')+'</div>').join('');}
+  document.getElementById('hist-overlay').classList.add('open');
+}
+function cerrarHistorial(){document.getElementById('hist-overlay').classList.remove('open');}
+
+// ── NOTA POST-EVENTO ──────────────────────────────────────────────────────────
+let _notaEventoId=null;
+function getNota(eventId){try{const n=JSON.parse(lsGet('g20_notas')||'{}');return n[String(eventId)]||null;}catch(e){return null;}}
+function setNota(eventId,data){try{const n=JSON.parse(lsGet('g20_notas')||'{}');if(data===null)delete n[String(eventId)];else n[String(eventId)]=data;lsSet('g20_notas',JSON.stringify(n));}catch(e){}}
+function verNota(id){
+  _notaEventoId=id;
+  const e=eventos.find(x=>x.id===id),nota=getNota(id),isPast=e&&e.fecha&&e.fecha<today();
+  document.getElementById('nota-title').textContent=isPast?'Nota post-evento':'Nota interna';
+  document.getElementById('nota-event-info').textContent=e?(e.nombre||'—')+' · '+(e.local||'—')+' · '+fmtD(e.fecha):'';
+  document.getElementById('nota-textarea').value=nota?nota.texto:'';
+  document.getElementById('nota-fecha-info').textContent=nota?'Última edición: '+nota.fecha:'';
+  document.getElementById('nota-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('nota-textarea').focus(),100);
+}
+function cerrarNota(){document.getElementById('nota-overlay').classList.remove('open');_notaEventoId=null;}
+function guardarNota(){
+  if(!_notaEventoId)return;
+  const texto=document.getElementById('nota-textarea').value.trim();
+  if(!texto){setNota(_notaEventoId,null);toast('Nota eliminada');cerrarNota();renderHistorial();return;}
+  setNota(_notaEventoId,{texto,fecha:fmtNow()});
+  toast('Nota guardada ✓');cerrarNota();renderHistorial();
+}
+
 // ── PRESUPUESTO ───────────────────────────────────────────────────────────────
 function fmtEUR(n){var num=parseFloat(n)||0;return num.toFixed(2).replace('.',',')+' EUR';}
 function presupuestoNum(e){var d=(e.fecha||'').replace(/-/g,''),id=String(e.id).slice(-4);return'PRES-'+d+'-'+id;}
