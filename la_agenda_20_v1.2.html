@@ -1407,13 +1407,8 @@ function mostrarImagenPresupuesto(dataUrl, filename) {
 }
 
 // ── ARRANQUE ──────────────────────────────────────────────────────────────────
-(async function arranque() {
-  if (eventos.length > 0) {
-    renderHistorial(); renderPanel(); renderComunicaciones(); renderCalendar();
-  }
-  await cargarDesdeSupabase();
-  iniciarRealtime();
-})();
+// Solo inicia el polling — la carga real ocurre en enterApp() tras el login
+iniciarRealtime();
 </script>
 </body>
 </html>
