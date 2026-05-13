@@ -309,6 +309,52 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .nota-overlay.open{display:flex;}
 .nota-box{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--rl);padding:1.4rem;width:100%;max-width:420px;}
 .nota-ind{display:inline-block;background:var(--blue-bg);color:var(--blue);border:0.5px solid var(--blue-border);border-radius:20px;font-size:9px;padding:1px 6px;font-weight:700;margin-left:3px;vertical-align:middle;}
+/* ══ SELECTOR DE MÓDULO ══════════════════════════════════════════════════════ */
+.module-sel-screen{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;background-image:radial-gradient(ellipse at top,rgba(239,137,176,0.08) 0%,transparent 60%);}
+.module-cards{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px;margin-top:2rem;}
+.module-card{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--rl);padding:1.4rem 1.6rem;cursor:pointer;transition:border-color .2s,background .2s;display:flex;align-items:center;gap:1.2rem;}
+.module-card:hover,.module-card:active{border-color:var(--gold);background:var(--bg3);}
+.module-card-icon{font-size:30px;flex-shrink:0;}
+.module-card-title{font-family:var(--fd);font-size:16px;text-transform:uppercase;letter-spacing:0.04em;color:var(--text);margin-bottom:3px;}
+.module-card-desc{font-size:11.5px;color:var(--text3);font-weight:500;}
+/* ══ RRHH APP ════════════════════════════════════════════════════════════════ */
+.rrhh-section{display:none;padding:1.5rem 1rem 5rem;}
+.rrhh-section.active{display:block;}
+.rrhh-list{display:flex;flex-direction:column;gap:10px;}
+.emp-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;cursor:pointer;transition:border-color .2s;}
+.emp-card:hover{border-color:var(--gold);}
+.emp-card-name{font-family:var(--fd);font-size:14px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;}
+.emp-card-meta{font-size:12px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.emp-card-liquido{font-size:13px;font-weight:700;color:var(--gold);margin-top:4px;}
+.eb{display:inline-block;font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;}
+.eb-activo{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border);}
+.eb-baja{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border);}
+/* RRHH overlay full-screen */
+.rrhh-ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.rrhh-ov.open{display:block;}
+.rrhh-ov-hdr{display:flex;align-items:center;gap:10px;padding:.9rem 1rem .6rem;border-bottom:.5px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;}
+.rrhh-ov-title{font-family:var(--fd);font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:var(--gold);}
+.rrhh-form{padding:1.2rem 1rem 4rem;}
+.rrhh-fsec{margin-bottom:1.4rem;}
+.rrhh-fsec-ttl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:.7rem;padding-bottom:4px;border-bottom:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.rrhh-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rrhh-gc{grid-column:1/-1;}
+.contrato-blk{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:10px;}
+.contrato-blk-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+/* Nóminas */
+.nom-row{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+/* DJs */
+.dj-card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:10px;}
+/* Porteros */
+.port-row{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+/* Desktop RRHH */
+@media(min-width:768px){
+  .rrhh-section{padding:2.5rem 3rem 5rem;}
+  .rrhh-grid{grid-template-columns:1fr 1fr 1fr;}
+  .module-cards{flex-direction:row;max-width:700px;}
+  .module-card{flex:1;flex-direction:column;text-align:center;padding:2rem 1.4rem;}
+  .module-card-icon{font-size:40px;}
+}
 @media print {
   body > *:not(#presup-overlay) { display: none !important; }
   #presup-overlay { display: block !important; background: white !important; padding: 0 !important; position: static !important; flex-direction: column !important; }
