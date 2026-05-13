@@ -1757,6 +1757,397 @@ function mostrarImagenPresupuesto(dataUrl, filename) {
   });
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// RRHH 2.0
+// ══════════════════════════════════════════════════════════════════════════════
+let rrEmp=JSON.parse(lsGet('g20_empleados')||'[]');
+let rrCont=JSON.parse(lsGet('g20_contratos')||'[]');
+let rrNom=JSON.parse(lsGet('g20_nominas')||'[]');
+let rrDJ=JSON.parse(lsGet('g20_djs')||'[]');
+let rrPort=JSON.parse(lsGet('g20_porteros')||'[]');
+let _eEmpId=null,_eNomId=null,_eDJId=null,_ePortId=null;
+let _contBlks=[];
+let _horRows=[];
+const MESES_L=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const ENC_TEL={'Las Tablas 2.0':'34668567593','La Pequeña 2.0':'34622173110','La Chula 2.0':'34666690517','La Traviesa 2.0':'34621622400','Green 2.0':'34675060113','La Peluquería 2.0':'34619144336','Juanita 2.0':'34619144336'};
+
+function saveRR(){lsSet('g20_empleados',JSON.stringify(rrEmp));lsSet('g20_contratos',JSON.stringify(rrCont));lsSet('g20_nominas',JSON.stringify(rrNom));lsSet('g20_djs',JSON.stringify(rrDJ));lsSet('g20_porteros',JSON.stringify(rrPort));}
+
+// ── NAVEGACIÓN ──
+function enterModulo(mod){
+  document.getElementById('module-selector').style.display='none';
+  if(mod==='agenda'){document.getElementById('main-app').style.display='';cargarDesdeSupabase();}
+  else{document.getElementById('rrhh-app').style.display='';cargarRRHH();}
+}
+function volverSelector(){
+  document.getElementById('rrhh-app').style.display='none';
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('module-selector').style.display='flex';
+}
+function rrhhTab(id,el){
+  document.querySelectorAll('#rrhh-app .tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.rrhh-section').forEach(s=>s.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const sec=document.getElementById('rrhh-tab-'+id);if(sec)sec.classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
+  if(id==='empleados')renderEmpleados();
+  if(id==='nominas')renderNominas();
+  if(id==='horarios')renderHorarios();
+  if(id==='djs')renderDJs();
+  if(id==='porteros')renderPorteros();
+}
+
+// ── SUPABASE RRHH ──
+async function cargarRRHH(){
+  const sync=document.getElementById('rrhh-sync');
+  try{
+    const[e,c,n,d,p]=await Promise.all([
+      supaFetch('empleados',{method:'GET',params:'order=apellidos.asc'}),
+      supaFetch('contratos',{method:'GET',params:'order=id.asc'}),
+      supaFetch('nominas',{method:'GET',params:'order=año.desc,mes.desc'}),
+      supaFetch('djs',{method:'GET',params:'order=fecha.desc'}),
+      supaFetch('porteros',{method:'GET',params:'order=fecha.desc'}),
+    ]);
+    rrEmp=e||[];rrCont=c||[];rrNom=n||[];rrDJ=d||[];rrPort=p||[];
+    saveRR();renderEmpleados();renderNominas();renderDJs();renderPorteros();
+    sync.textContent='● Sync';sync.style.color='var(--green)';
+  }catch(err){sync.textContent='○ Offline';sync.style.color='var(--amber)';console.warn('RRHH load:',err.message);}
+}
+
+// ── EMPLEADOS ──
+function renderEmpleados(){
+  const q=(document.getElementById('rrhh-buscar').value||'').toLowerCase();
+  const fL=document.getElementById('rrhh-fil-local').value;
+  const fE=document.getElementById('rrhh-fil-estado').value;
+  let list=rrEmp.filter(e=>{
+    if(fL&&e.local!==fL)return false;
+    if(fE&&e.estado!==fE)return false;
+    if(q&&!((e.nombre||'')+(e.apellidos||'')+(e.puesto||'')+(e.local||'')).toLowerCase().includes(q))return false;
+    return true;
+  });
+  const cont=document.getElementById('rrhh-emp-list');
+  if(!list.length){cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin empleados. Pulsa + Nuevo para añadir.</div>';return;}
+  cont.innerHTML=list.map(e=>{
+    const cons=rrCont.filter(c=>c.empleado_id===e.id);
+    const liq=cons.length?cons.map(c=>Number(c.liquido_base||0).toFixed(2)+'€').join(' + '):'';
+    return`<div class="emp-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="emp-card-name">${e.nombre||''} ${e.apellidos||''}</div>
+        <span class="eb ${e.estado==='baja'?'eb-baja':'eb-activo'}">${e.estado||'activo'}</span>
+      </div>
+      <div class="emp-card-meta">
+        <span style="color:${LC[e.local]||'var(--text3)'};font-weight:600">${e.local||'—'}</span>
+        <span>·</span><span>${e.puesto||'—'}</span>
+      </div>
+      ${liq?`<div class="emp-card-liquido">💶 ${liq}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="abrirFormEmp(${e.id})">✏️ Editar</button>
+        <button class="btn btn-sm" style="background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)" onclick="abrirFormNom(null,${e.id})">💶 Nómina</button>
+        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="eliminarEmp(${e.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirFormEmp(id){
+  _eEmpId=id;
+  const e=id?rrEmp.find(x=>x.id===id):null;
+  document.getElementById('emp-ov-title').textContent=e?'Editar empleado':'Nuevo empleado';
+  const set=(fid,val)=>{const el=document.getElementById(fid);if(el)el.value=val||'';};
+  set('emp-nombre',e?.nombre);set('emp-apellidos',e?.apellidos);set('emp-dni',e?.dni);
+  set('emp-fnac',e?.fecha_nacimiento);set('emp-tel',e?.telefono);set('emp-email',e?.email);
+  set('emp-dir',e?.direccion);set('emp-ciudad',e?.ciudad);set('emp-cp',e?.cp);
+  set('emp-numss',e?.num_ss);set('emp-iban',e?.iban);set('emp-local',e?.local);
+  set('emp-puesto',e?.puesto);set('emp-falta',e?.fecha_alta);set('emp-fbaja',e?.fecha_fin);
+  set('emp-estado',e?.estado||'activo');set('emp-notas',e?.notas);
+  _contBlks=id?rrCont.filter(c=>c.empleado_id===id).map(c=>({...c})):[];
+  renderContBlks();
+  document.getElementById('emp-ov').classList.add('open');
+}
+function cerrarFormEmp(){document.getElementById('emp-ov').classList.remove('open');}
+
+function renderContBlks(){
+  const cont=document.getElementById('contratos-blk-list');
+  if(!_contBlks.length){cont.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">Sin contratos. Pulsa + Añadir.</div>';return;}
+  cont.innerHTML=_contBlks.map((c,i)=>`
+    <div class="contrato-blk">
+      <div class="contrato-blk-hdr">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)">Contrato ${i+1}</span>
+        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border);font-size:10px;padding:2px 8px" onclick="_contBlks.splice(${i},1);renderContBlks()">Eliminar</button>
+      </div>
+      <div class="rrhh-grid">
+        <div class="field"><label>Sociedad</label><input class="inp" value="${escHtml(c.sociedad||'')}" oninput="_contBlks[${i}].sociedad=this.value" placeholder="Nombre empresa"></div>
+        <div class="field"><label>Convenio</label><input class="inp" value="${escHtml(c.convenio||'')}" oninput="_contBlks[${i}].convenio=this.value" placeholder="Hostelería Madrid"></div>
+        <div class="field"><label>Tipo contrato</label><input class="inp" value="${escHtml(c.tipo||'')}" oninput="_contBlks[${i}].tipo=this.value" placeholder="Indefinido"></div>
+        <div class="field"><label>Líquido base (€)</label><input class="inp" type="number" value="${c.liquido_base||''}" oninput="_contBlks[${i}].liquido_base=parseFloat(this.value)||0" step="0.01" placeholder="1200.00"></div>
+        <div class="field"><label>Fecha inicio</label><input class="inp" type="date" value="${c.fecha_inicio||''}" oninput="_contBlks[${i}].fecha_inicio=this.value"></div>
+        <div class="field"><label>Fecha fin</label><input class="inp" type="date" value="${c.fecha_fin||''}" oninput="_contBlks[${i}].fecha_fin=this.value"></div>
+      </div>
+    </div>`).join('');
+}
+function addContratoBlk(){_contBlks.push({sociedad:'',convenio:'',tipo:'Indefinido',liquido_base:0,fecha_inicio:'',fecha_fin:''});renderContBlks();}
+
+async function guardarEmp(){
+  const g=id=>document.getElementById(id).value.trim();
+  const data={nombre:g('emp-nombre'),apellidos:g('emp-apellidos'),dni:g('emp-dni'),fecha_nacimiento:document.getElementById('emp-fnac').value||null,telefono:g('emp-tel'),email:g('emp-email'),direccion:g('emp-dir'),ciudad:g('emp-ciudad'),cp:g('emp-cp'),num_ss:g('emp-numss'),iban:g('emp-iban'),local:document.getElementById('emp-local').value,puesto:g('emp-puesto'),fecha_alta:document.getElementById('emp-falta').value||null,fecha_fin:document.getElementById('emp-fbaja').value||null,estado:document.getElementById('emp-estado').value,notas:g('emp-notas')};
+  if(!data.nombre){toast('Introduce el nombre');return;}
+  try{
+    let eid=_eEmpId;
+    if(_eEmpId){
+      await supaFetch('empleados',{method:'PATCH',params:'id=eq.'+_eEmpId,body:data,prefer:'return=minimal'});
+      const i=rrEmp.findIndex(x=>x.id===_eEmpId);if(i>-1)rrEmp[i]={...rrEmp[i],...data};
+    }else{
+      const r=await supaFetch('empleados',{method:'POST',body:data,prefer:'return=representation'});
+      if(r&&r[0]){eid=r[0].id;rrEmp.unshift(r[0]);}
+    }
+    if(eid){
+      await supaFetch('contratos',{method:'DELETE',params:'empleado_id=eq.'+eid});
+      rrCont=rrCont.filter(c=>c.empleado_id!==eid);
+      for(const c of _contBlks){const cd={...c,empleado_id:eid};delete cd.id;const cr=await supaFetch('contratos',{method:'POST',body:cd,prefer:'return=representation'});if(cr&&cr[0])rrCont.push(cr[0]);}
+    }
+    saveRR();cerrarFormEmp();renderEmpleados();toast('Empleado guardado ✓');
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+async function eliminarEmp(id){
+  if(!confirm('¿Eliminar este empleado y todos sus datos?'))return;
+  try{
+    await supaFetch('contratos',{method:'DELETE',params:'empleado_id=eq.'+id});
+    await supaFetch('empleados',{method:'DELETE',params:'id=eq.'+id});
+    rrEmp=rrEmp.filter(e=>e.id!==id);rrCont=rrCont.filter(c=>c.empleado_id!==id);
+    saveRR();renderEmpleados();toast('Empleado eliminado');
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+// ── NÓMINAS ──
+function renderNominas(){
+  const fE=document.getElementById('nom-fil-emp').value;
+  const fM=document.getElementById('nom-fil-mes').value;
+  const fA=document.getElementById('nom-fil-año').value;
+  // Actualizar select empleados
+  const sel=document.getElementById('nom-fil-emp'),prev=sel.value;
+  sel.innerHTML='<option value="">Todos los empleados</option>'+rrEmp.map(e=>`<option value="${e.id}" ${String(e.id)===prev?'selected':''}>${e.nombre} ${e.apellidos}</option>`).join('');
+  let list=[...rrNom];
+  if(fE)list=list.filter(n=>String(n.empleado_id)===fE);
+  if(fM)list=list.filter(n=>String(n.mes)===fM);
+  if(fA)list=list.filter(n=>String(n.año)===fA);
+  list.sort((a,b)=>b.año-a.año||b.mes-a.mes);
+  const cont=document.getElementById('rrhh-nom-list');
+  if(!list.length){cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin nóminas registradas</div>';return;}
+  cont.innerHTML=list.map(n=>{
+    const emp=rrEmp.find(e=>e.id===n.empleado_id);
+    const con=n.contrato_id?rrCont.find(c=>c.id===n.contrato_id):null;
+    return`<div class="nom-row">
+      <div>
+        <div style="font-weight:700;font-size:13px">${MESES_L[(n.mes||1)-1]} ${n.año||''}</div>
+        <div style="font-size:11px;color:var(--text3)">${emp?emp.nombre+' '+emp.apellidos:'—'}${con?' · '+con.convenio:''}</div>
+        <div style="font-size:11px;color:var(--text3)">Base: ${Number(n.liquido_base||0).toFixed(2)}€${n.horas_extra>0?' + '+n.horas_extra+'h extra':''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--fd);font-size:16px;color:var(--gold)">${Number(n.total||0).toFixed(2)} €</div>
+        <button class="btn btn-sm" style="margin-top:4px;font-size:10px;background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="eliminarNom(${n.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirFormNom(id,preEmpId){
+  _eNomId=id;
+  const sel=document.getElementById('nom-emp-sel');
+  sel.innerHTML='<option value="">Selecciona empleado...</option>'+rrEmp.map(e=>`<option value="${e.id}">${e.nombre} ${e.apellidos} — ${e.local||'—'}</option>`).join('');
+  const now=new Date();
+  document.getElementById('nom-mes').value=now.getMonth()+1;
+  document.getElementById('nom-año').value=now.getFullYear();
+  ['nom-liquido','nom-horas','nom-phora','nom-extras','nom-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nom-total-prev').textContent='0.00 €';
+  document.getElementById('nom-cont-wrap').style.display='none';
+  if(preEmpId){sel.value=preEmpId;onNomEmpChange();}
+  document.getElementById('nom-ov').classList.add('open');
+}
+function cerrarFormNom(){document.getElementById('nom-ov').classList.remove('open');}
+
+function onNomEmpChange(){
+  const eid=parseInt(document.getElementById('nom-emp-sel').value);
+  const cons=rrCont.filter(c=>c.empleado_id===eid);
+  const wrap=document.getElementById('nom-cont-wrap');
+  if(cons.length>1){
+    wrap.style.display='';
+    document.getElementById('nom-cont-sel').innerHTML='<option value="">Todos los contratos</option>'+cons.map(c=>`<option value="${c.id}">${c.convenio||c.sociedad||'Contrato '+c.id} — ${Number(c.liquido_base||0).toFixed(2)}€</option>`).join('');
+  }else{
+    wrap.style.display='none';
+    if(cons.length===1){document.getElementById('nom-liquido').value=cons[0].liquido_base||'';calcNomTotal();}
+  }
+}
+function onNomContChange(){
+  const cid=parseInt(document.getElementById('nom-cont-sel').value);
+  if(cid){const c=rrCont.find(x=>x.id===cid);if(c){document.getElementById('nom-liquido').value=c.liquido_base||'';calcNomTotal();}}
+}
+function calcNomTotal(){
+  const b=parseFloat(document.getElementById('nom-liquido').value)||0;
+  const h=parseFloat(document.getElementById('nom-horas').value)||0;
+  const ph=parseFloat(document.getElementById('nom-phora').value)||0;
+  const em=parseFloat(document.getElementById('nom-extras').value)||0;
+  const ext=h>0&&ph>0?h*ph:em;
+  if(h>0&&ph>0)document.getElementById('nom-extras').value=ext.toFixed(2);
+  document.getElementById('nom-total-prev').textContent=(b+ext).toFixed(2)+' €';
+}
+async function guardarNom(){
+  const eid=parseInt(document.getElementById('nom-emp-sel').value);
+  if(!eid){toast('Selecciona un empleado');return;}
+  const cid=document.getElementById('nom-cont-sel').value?parseInt(document.getElementById('nom-cont-sel').value):null;
+  const b=parseFloat(document.getElementById('nom-liquido').value)||0;
+  const ext=parseFloat(document.getElementById('nom-extras').value)||0;
+  const data={empleado_id:eid,contrato_id:cid||null,mes:parseInt(document.getElementById('nom-mes').value),año:parseInt(document.getElementById('nom-año').value),liquido_base:b,horas_extra:parseFloat(document.getElementById('nom-horas').value)||0,importe_extra:ext,total:b+ext,notas:document.getElementById('nom-notas').value.trim()};
+  try{
+    const r=await supaFetch('nominas',{method:'POST',body:data,prefer:'return=representation'});
+    if(r&&r[0])rrNom.unshift(r[0]);
+    saveRR();cerrarFormNom();renderNominas();toast('Nómina registrada ✓');
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+async function eliminarNom(id){
+  if(!confirm('¿Eliminar esta nómina?'))return;
+  try{await supaFetch('nominas',{method:'DELETE',params:'id=eq.'+id});rrNom=rrNom.filter(n=>n.id!==id);saveRR();renderNominas();toast('Eliminada');}
+  catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+// ── DJS ──
+function renderDJs(){
+  const cont=document.getElementById('rrhh-dj-list');
+  if(!rrDJ.length){cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin DJs registrados</div>';return;}
+  const byNombre={};
+  rrDJ.forEach(d=>{if(!byNombre[d.nombre])byNombre[d.nombre]=[];byNombre[d.nombre].push(d);});
+  const hoy=new Date().toISOString().slice(0,10);
+  cont.innerHTML=Object.entries(byNombre).map(([nombre,acts])=>{
+    const f=acts[0];
+    const prox=acts.filter(a=>a.fecha&&a.fecha>=hoy).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    return`<div class="dj-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-family:var(--fd);font-size:14px;text-transform:uppercase;letter-spacing:.03em">🎧 ${nombre||'—'}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" onclick="abrirFormDJ(${f.id})">✏️</button>
+          <button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:var(--green-border)" onclick="nuevaActDJ('${escHtml(nombre)}')">+ Actuación</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px">${f.telefono||''}${f.email?' · '+f.email:''}</div>
+      ${prox.length?`<div style="margin-top:8px">${prox.map(a=>`<div style="font-size:12px;color:var(--text2);padding:4px 0;border-bottom:.5px solid var(--border)">${fmtD(a.fecha)} · ${a.local||'—'} · ${a.hora_ini||'—'}${a.hora_fin?' - '+a.hora_fin:''}${a.cache?' · '+a.cache+'€':''}</div>`).join('')}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function abrirFormDJ(id){
+  _eDJId=id;const d=id?rrDJ.find(x=>x.id===id):null;
+  document.getElementById('dj-ov-title').textContent=d?'Editar DJ':'Nuevo DJ / Actuación';
+  const set=(fid,val)=>{const el=document.getElementById(fid);if(el)el.value=val||'';};
+  set('dj-nombre',d?.nombre);set('dj-tel',d?.telefono);set('dj-email',d?.email);
+  set('dj-local',d?.local);set('dj-fecha',d?.fecha);set('dj-ini',d?.hora_ini);
+  set('dj-fin',d?.hora_fin);set('dj-cache',d?.cache);set('dj-notas',d?.notas);
+  document.getElementById('dj-ov').classList.add('open');
+}
+function cerrarFormDJ(){document.getElementById('dj-ov').classList.remove('open');}
+function nuevaActDJ(nombre){abrirFormDJ(null);document.getElementById('dj-nombre').value=nombre;}
+async function guardarDJ(){
+  const data={nombre:document.getElementById('dj-nombre').value.trim(),telefono:document.getElementById('dj-tel').value.trim(),email:document.getElementById('dj-email').value.trim(),local:document.getElementById('dj-local').value,fecha:document.getElementById('dj-fecha').value||null,hora_ini:document.getElementById('dj-ini').value||null,hora_fin:document.getElementById('dj-fin').value||null,cache:parseFloat(document.getElementById('dj-cache').value)||null,notas:document.getElementById('dj-notas').value.trim()};
+  if(!data.nombre){toast('Introduce el nombre del DJ');return;}
+  try{
+    if(_eDJId){await supaFetch('djs',{method:'PATCH',params:'id=eq.'+_eDJId,body:data,prefer:'return=minimal'});const i=rrDJ.findIndex(x=>x.id===_eDJId);if(i>-1)rrDJ[i]={...rrDJ[i],...data};}
+    else{const r=await supaFetch('djs',{method:'POST',body:data,prefer:'return=representation'});if(r&&r[0])rrDJ.push(r[0]);}
+    saveRR();cerrarFormDJ();renderDJs();toast('DJ guardado ✓');
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+// ── PORTEROS ──
+function renderPorteros(){
+  const fL=document.getElementById('port-fil-local').value;
+  let list=fL?rrPort.filter(p=>p.local===fL):[...rrPort];
+  list.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  const cont=document.getElementById('rrhh-port-list');
+  if(!list.length){cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin turnos registrados</div>';return;}
+  cont.innerHTML=list.map(p=>`<div class="port-row">
+    <div>
+      <div style="font-weight:700;color:${LC[p.local]||'var(--text)'}">${p.local||'—'}</div>
+      <div style="font-size:12px;color:var(--text3)">${fmtD(p.fecha)} · ${p.hora_ini||'—'} - ${p.hora_fin||'—'}</div>
+      ${p.notas?`<div style="font-size:12px;color:var(--text3)">${p.notas}</div>`:''}
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:var(--fd);font-size:20px;color:var(--gold)">${p.num_porteros||1}</div>
+      <div style="font-size:10px;color:var(--text3)">portero${(p.num_porteros||1)!==1?'s':''}</div>
+      <button class="btn btn-sm" style="margin-top:4px;background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="eliminarPortero(${p.id})">🗑</button>
+    </div>
+  </div>`).join('');
+}
+function abrirFormPortero(id){
+  _ePortId=id;
+  ['port-local','port-fecha','port-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('port-num').value='1';
+  document.getElementById('port-ini').value='';document.getElementById('port-fin').value='';
+  document.getElementById('port-ov').classList.add('open');
+}
+function cerrarFormPortero(){document.getElementById('port-ov').classList.remove('open');}
+async function guardarPortero(){
+  const data={local:document.getElementById('port-local').value,fecha:document.getElementById('port-fecha').value||null,num_porteros:parseInt(document.getElementById('port-num').value)||1,hora_ini:document.getElementById('port-ini').value||null,hora_fin:document.getElementById('port-fin').value||null,notas:document.getElementById('port-notas').value.trim()};
+  if(!data.local||!data.fecha){toast('Selecciona local y fecha');return;}
+  try{const r=await supaFetch('porteros',{method:'POST',body:data,prefer:'return=representation'});if(r&&r[0])rrPort.unshift(r[0]);saveRR();cerrarFormPortero();renderPorteros();toast('Turno guardado ✓');}
+  catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+async function eliminarPortero(id){
+  if(!confirm('¿Eliminar este turno?'))return;
+  try{await supaFetch('porteros',{method:'DELETE',params:'id=eq.'+id});rrPort=rrPort.filter(p=>p.id!==id);saveRR();renderPorteros();toast('Eliminado');}
+  catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+// ── HORARIOS ──
+function renderHorarios(){
+  const cont=document.getElementById('rrhh-hor-list');
+  cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Pulsa + Nuevo para crear un horario semanal y enviarlo por WhatsApp.</div>';
+}
+function abrirFormHorario(){
+  _horRows=[];
+  const now=new Date(),dow=now.getDay()===0?6:now.getDay()-1,lunes=new Date(now);
+  lunes.setDate(now.getDate()-dow);
+  document.getElementById('hor-semana').value=lunes.toISOString().slice(0,10);
+  document.getElementById('hor-local').value='';document.getElementById('hor-notas').value='';
+  renderHorRows();document.getElementById('hor-ov').classList.add('open');
+}
+function cerrarFormHorario(){document.getElementById('hor-ov').classList.remove('open');}
+function renderHorRows(){
+  const DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const cont=document.getElementById('hor-rows');
+  if(!_horRows.length){cont.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0">Añade empleados con el botón de abajo.</div>';return;}
+  cont.innerHTML=_horRows.map((r,i)=>`
+    <div style="background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:10px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <select class="inp" style="flex:1;font-size:12px" onchange="_horRows[${i}].eid=parseInt(this.value)">
+          <option value="">Selecciona empleado...</option>
+          ${rrEmp.map(e=>`<option value="${e.id}" ${e.id===r.eid?'selected':''}>${e.nombre} ${e.apellidos}</option>`).join('')}
+        </select>
+        <button class="btn btn-sm" style="margin-left:8px;background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="_horRows.splice(${i},1);renderHorRows()">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">
+        ${DIAS.map((d,j)=>`<div style="text-align:center">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:2px">${d}</div>
+          <input class="inp" style="padding:3px 1px;font-size:10px;text-align:center" value="${escHtml(r.dias[j]||'')}" placeholder="L" oninput="_horRows[${i}].dias[${j}]=this.value">
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function addHorRow(){_horRows.push({eid:null,dias:['','','','','','','']});renderHorRows();}
+function guardarHorario(){toast('Horario listo — usa "Enviar por WhatsApp" para mandarlo ✓');cerrarFormHorario();}
+function enviarHorarioWA(){
+  const local=document.getElementById('hor-local').value;
+  const semana=document.getElementById('hor-semana').value;
+  const DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let msg=`HORARIO — ${local||'Grupo 2.0'}\nSemana del ${fmtD(semana)}\n\n`;
+  _horRows.forEach(r=>{
+    const emp=rrEmp.find(e=>e.id===r.eid);if(!emp)return;
+    msg+=`${emp.nombre} ${emp.apellidos}:\n`;
+    r.dias.forEach((d,i)=>{if(d)msg+=`  ${DIAS[i]}: ${d}\n`;});
+    msg+='\n';
+  });
+  const notas=document.getElementById('hor-notas').value;
+  if(notas)msg+=notas;
+  const tel=local?ENC_TEL[local]||'':'';
+  window.open('https://wa.me/'+(tel||'')+`?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
 // ── ARRANQUE ──────────────────────────────────────────────────────────────────
 // Solo inicia el polling — la carga real ocurre en enterApp() tras el login
 iniciarRealtime();
