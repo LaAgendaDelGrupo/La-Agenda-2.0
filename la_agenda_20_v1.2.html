@@ -938,6 +938,307 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   </div>
 </div>
 
+<!-- ══ SELECTOR DE MÓDULO ══════════════════════════════════════════════════ -->
+<div id="module-selector" class="module-sel-screen" style="display:none">
+  <div style="font-family:var(--fd);font-size:32px;letter-spacing:.04em;text-transform:uppercase;text-align:center">Grupo <span style="color:var(--gold)">2.0</span></div>
+  <div style="font-size:11px;color:var(--gold);letter-spacing:.18em;font-style:italic;font-weight:600;text-align:center;text-transform:uppercase;opacity:.75;margin-top:4px">Herramienta interna</div>
+  <div class="module-cards">
+    <div class="module-card" onclick="enterModulo('agenda')">
+      <div class="module-card-icon">📅</div>
+      <div><div class="module-card-title">La Agenda 2.0</div><div class="module-card-desc">Eventos, reservas y comunicaciones</div></div>
+    </div>
+    <div class="module-card" onclick="enterModulo('rrhh')">
+      <div class="module-card-icon">👥</div>
+      <div><div class="module-card-title">RRHH 2.0</div><div class="module-card-desc">Empleados, nóminas, horarios y más</div></div>
+    </div>
+  </div>
+  <button onclick="cerrarSesion()" style="margin-top:2.5rem;font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--font)">Cerrar sesión</button>
+</div>
+
+<!-- ══ RRHH APP ══════════════════════════════════════════════════════════════ -->
+<div id="rrhh-app" class="app" style="display:none">
+  <div class="app-header">
+    <div style="display:flex;align-items:center;gap:9px">
+      <button onclick="volverSelector()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 6px 0 0;line-height:1">‹</button>
+      <span style="font-family:var(--fd);font-size:17px;letter-spacing:.05em;text-transform:uppercase">RRHH</span>
+      <span style="display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--gold);border-radius:24px;padding:2px 9px;font-family:var(--fd);font-size:12px;color:var(--gold);letter-spacing:.05em;line-height:1.2">2.0</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="rrhh-sync" style="font-size:9.5px;font-weight:700;font-family:var(--fd);letter-spacing:.05em;color:var(--amber)">○ Sync</span>
+      <button onclick="cerrarSesion()" style="font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:var(--font);padding:2px 6px">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="rrhhTab('empleados',this)">👥 Equipo</button>
+    <button class="tab" onclick="rrhhTab('nominas',this)">💶 Nóminas</button>
+    <button class="tab" onclick="rrhhTab('horarios',this)">📅 Horarios</button>
+    <button class="tab" onclick="rrhhTab('djs',this)">🎧 DJs</button>
+    <button class="tab" onclick="rrhhTab('porteros',this)">🚪 Porteros</button>
+  </div>
+
+  <!-- EMPLEADOS -->
+  <div id="rrhh-tab-empleados" class="rrhh-section active">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h2 style="font-family:var(--fd);font-size:16px;text-transform:uppercase;letter-spacing:.05em">Equipo</h2>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormEmp(null)">+ Nuevo</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input id="rrhh-buscar" class="search-input" style="flex:1;min-width:160px" placeholder="Buscar empleado..." oninput="renderEmpleados()">
+      <select id="rrhh-fil-local" class="filter-select" onchange="renderEmpleados()">
+        <option value="">Todos los locales</option>
+        <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+        <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+      </select>
+      <select id="rrhh-fil-estado" class="filter-select" onchange="renderEmpleados()">
+        <option value="">Todos</option><option value="activo">Activos</option><option value="baja">Baja</option>
+      </select>
+    </div>
+    <div id="rrhh-emp-list" class="rrhh-list"></div>
+  </div>
+
+  <!-- NÓMINAS -->
+  <div id="rrhh-tab-nominas" class="rrhh-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h2 style="font-family:var(--fd);font-size:16px;text-transform:uppercase;letter-spacing:.05em">Nóminas</h2>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormNom(null,null)">+ Registrar</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select id="nom-fil-emp" class="filter-select" style="flex:1" onchange="renderNominas()"><option value="">Todos los empleados</option></select>
+      <select id="nom-fil-mes" class="filter-select" onchange="renderNominas()">
+        <option value="">Todos</option><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option>
+        <option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option>
+        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <select id="nom-fil-año" class="filter-select" onchange="renderNominas()">
+        <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
+      </select>
+    </div>
+    <div id="rrhh-nom-list"></div>
+  </div>
+
+  <!-- HORARIOS -->
+  <div id="rrhh-tab-horarios" class="rrhh-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h2 style="font-family:var(--fd);font-size:16px;text-transform:uppercase;letter-spacing:.05em">Horarios</h2>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormHorario()">+ Nuevo</button>
+    </div>
+    <select id="hor-fil-local" class="filter-select" style="width:100%;margin-bottom:12px" onchange="renderHorarios()">
+      <option value="">Todos los locales</option>
+      <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+      <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+    </select>
+    <div id="rrhh-hor-list"></div>
+  </div>
+
+  <!-- DJS -->
+  <div id="rrhh-tab-djs" class="rrhh-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h2 style="font-family:var(--fd);font-size:16px;text-transform:uppercase;letter-spacing:.05em">DJs</h2>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormDJ(null)">+ Nuevo</button>
+    </div>
+    <div id="rrhh-dj-list" class="rrhh-list"></div>
+  </div>
+
+  <!-- PORTEROS -->
+  <div id="rrhh-tab-porteros" class="rrhh-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h2 style="font-family:var(--fd);font-size:16px;text-transform:uppercase;letter-spacing:.05em">Porteros</h2>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormPortero(null)">+ Añadir turno</button>
+    </div>
+    <select id="port-fil-local" class="filter-select" style="width:100%;margin-bottom:12px" onchange="renderPorteros()">
+      <option value="">Todos los locales</option>
+      <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+      <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+    </select>
+    <div id="rrhh-port-list"></div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: EMPLEADO ═══════════════════════════════════════════════════ -->
+<div id="emp-ov" class="rrhh-ov">
+  <div class="rrhh-ov-hdr">
+    <button onclick="cerrarFormEmp()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 8px 0 0;line-height:1">‹</button>
+    <span class="rrhh-ov-title" id="emp-ov-title">Nuevo empleado</span>
+  </div>
+  <div class="rrhh-form">
+    <div class="rrhh-fsec">
+      <div class="rrhh-fsec-ttl">Datos personales</div>
+      <div class="rrhh-grid">
+        <div class="field"><label>Nombre</label><input class="inp" id="emp-nombre" placeholder="Nombre"></div>
+        <div class="field"><label>Apellidos</label><input class="inp" id="emp-apellidos" placeholder="Apellidos"></div>
+        <div class="field"><label>DNI / NIE</label><input class="inp" id="emp-dni" placeholder="00000000X"></div>
+        <div class="field"><label>Fecha nacimiento</label><input class="inp" type="date" id="emp-fnac"></div>
+        <div class="field"><label>Teléfono</label><input class="inp" type="tel" id="emp-tel" placeholder="6XX XXX XXX"></div>
+        <div class="field"><label>Email</label><input class="inp" type="email" id="emp-email"></div>
+        <div class="field rrhh-gc"><label>Dirección</label><input class="inp" id="emp-dir" placeholder="Calle, número, piso..."></div>
+        <div class="field"><label>Ciudad</label><input class="inp" id="emp-ciudad" placeholder="Madrid"></div>
+        <div class="field"><label>C.P.</label><input class="inp" id="emp-cp" placeholder="28000"></div>
+        <div class="field"><label>Nº Seg. Social</label><input class="inp" id="emp-numss" placeholder="XXXXXXXXXXX"></div>
+        <div class="field"><label>IBAN</label><input class="inp" id="emp-iban" placeholder="ES00 0000 0000 0000 0000 0000"></div>
+      </div>
+    </div>
+    <div class="rrhh-fsec">
+      <div class="rrhh-fsec-ttl">Datos laborales</div>
+      <div class="rrhh-grid">
+        <div class="field"><label>Local</label>
+          <select class="inp" id="emp-local">
+            <option value="">Selecciona...</option>
+            <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+            <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+          </select>
+        </div>
+        <div class="field"><label>Puesto</label><input class="inp" id="emp-puesto" placeholder="Camarero, Encargado..."></div>
+        <div class="field"><label>Fecha alta</label><input class="inp" type="date" id="emp-falta"></div>
+        <div class="field"><label>Fecha baja</label><input class="inp" type="date" id="emp-fbaja"></div>
+        <div class="field"><label>Estado</label>
+          <select class="inp" id="emp-estado"><option value="activo">Activo</option><option value="baja">Baja</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="rrhh-fsec">
+      <div class="rrhh-fsec-ttl"><span>Contratos</span><button class="btn btn-sm" onclick="addContratoBlk()" style="font-size:10px;padding:2px 10px">+ Añadir</button></div>
+      <div id="contratos-blk-list"></div>
+    </div>
+    <div class="rrhh-fsec">
+      <div class="rrhh-fsec-ttl">Notas</div>
+      <textarea class="inp" id="emp-notas" rows="3" placeholder="Observaciones, info extra..." style="resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-full" onclick="cerrarFormEmp()">Cancelar</button>
+      <button class="btn btn-primary btn-full" onclick="guardarEmp()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: NÓMINA ════════════════════════════════════════════════════ -->
+<div id="nom-ov" class="rrhh-ov">
+  <div class="rrhh-ov-hdr">
+    <button onclick="cerrarFormNom()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 8px 0 0;line-height:1">‹</button>
+    <span class="rrhh-ov-title">Registrar nómina</span>
+  </div>
+  <div class="rrhh-form">
+    <div class="rrhh-grid">
+      <div class="field rrhh-gc"><label>Empleado</label>
+        <select class="inp" id="nom-emp-sel" onchange="onNomEmpChange()"><option value="">Selecciona...</option></select>
+      </div>
+      <div class="field rrhh-gc" id="nom-cont-wrap" style="display:none"><label>Contrato</label>
+        <select class="inp" id="nom-cont-sel" onchange="onNomContChange()"><option value="">Selecciona contrato...</option></select>
+      </div>
+      <div class="field"><label>Mes</label>
+        <select class="inp" id="nom-mes">
+          <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option>
+          <option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option>
+          <option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+      </div>
+      <div class="field"><label>Año</label><input class="inp" type="number" id="nom-año" value="2026" min="2020" max="2035"></div>
+      <div class="field"><label>Líquido base (€)</label><input class="inp" type="number" id="nom-liquido" placeholder="0.00" step="0.01" oninput="calcNomTotal()"></div>
+      <div class="field"><label>Horas extra</label><input class="inp" type="number" id="nom-horas" placeholder="0" oninput="calcNomTotal()"></div>
+      <div class="field"><label>€ / hora extra</label><input class="inp" type="number" id="nom-phora" placeholder="0.00" step="0.01" oninput="calcNomTotal()"></div>
+      <div class="field"><label>Extras manuales (€)</label><input class="inp" type="number" id="nom-extras" placeholder="0.00" step="0.01" oninput="calcNomTotal()"></div>
+      <div class="field rrhh-gc" style="background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:10px">
+        <label style="color:var(--gold);font-weight:700">TOTAL A COBRAR</label>
+        <div id="nom-total-prev" style="font-family:var(--fd);font-size:24px;color:var(--gold);margin-top:4px">0.00 €</div>
+      </div>
+      <div class="field rrhh-gc"><label>Notas</label><input class="inp" id="nom-notas" placeholder="Observaciones..."></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:1rem">
+      <button class="btn btn-full" onclick="cerrarFormNom()">Cancelar</button>
+      <button class="btn btn-primary btn-full" onclick="guardarNom()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: HORARIO ═══════════════════════════════════════════════════ -->
+<div id="hor-ov" class="rrhh-ov">
+  <div class="rrhh-ov-hdr">
+    <button onclick="cerrarFormHorario()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 8px 0 0;line-height:1">‹</button>
+    <span class="rrhh-ov-title">Horario semanal</span>
+  </div>
+  <div class="rrhh-form">
+    <div class="rrhh-grid">
+      <div class="field"><label>Local</label>
+        <select class="inp" id="hor-local">
+          <option value="">Selecciona...</option>
+          <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+          <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+        </select>
+      </div>
+      <div class="field"><label>Semana del (lunes)</label><input class="inp" type="date" id="hor-semana"></div>
+    </div>
+    <div style="margin-top:1rem">
+      <div class="rrhh-fsec-ttl"><span>Turnos</span><button class="btn btn-sm" onclick="addHorRow()" style="font-size:10px;padding:2px 10px">+ Empleado</button></div>
+      <div id="hor-rows"></div>
+    </div>
+    <div class="field" style="margin-top:1rem"><label>Notas</label><textarea class="inp" id="hor-notas" rows="2" placeholder="Observaciones..."></textarea></div>
+    <div style="display:flex;gap:10px;margin-top:1rem">
+      <button class="btn btn-full" onclick="cerrarFormHorario()">Cancelar</button>
+      <button class="btn btn-primary btn-full" onclick="guardarHorario()">Guardar</button>
+    </div>
+    <button class="btn btn-full" style="margin-top:8px;background:var(--green-bg);color:var(--green);border-color:var(--green-border)" onclick="enviarHorarioWA()">📲 Enviar por WhatsApp al encargado</button>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: DJ ════════════════════════════════════════════════════════ -->
+<div id="dj-ov" class="rrhh-ov">
+  <div class="rrhh-ov-hdr">
+    <button onclick="cerrarFormDJ()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 8px 0 0;line-height:1">‹</button>
+    <span class="rrhh-ov-title" id="dj-ov-title">Nuevo DJ / Actuación</span>
+  </div>
+  <div class="rrhh-form">
+    <div class="rrhh-grid">
+      <div class="field"><label>Nombre artístico</label><input class="inp" id="dj-nombre" placeholder="Nombre"></div>
+      <div class="field"><label>Teléfono</label><input class="inp" type="tel" id="dj-tel" placeholder="6XX XXX XXX"></div>
+      <div class="field rrhh-gc"><label>Email</label><input class="inp" type="email" id="dj-email"></div>
+      <div class="field"><label>Local</label>
+        <select class="inp" id="dj-local">
+          <option value="">Selecciona...</option>
+          <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+          <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+        </select>
+      </div>
+      <div class="field"><label>Fecha</label><input class="inp" type="date" id="dj-fecha"></div>
+      <div class="field"><label>Hora inicio</label><input class="inp" type="time" id="dj-ini"></div>
+      <div class="field"><label>Hora fin</label><input class="inp" type="time" id="dj-fin"></div>
+      <div class="field"><label>Caché (€)</label><input class="inp" type="number" id="dj-cache" placeholder="0"></div>
+      <div class="field rrhh-gc"><label>Notas / Rider</label><textarea class="inp" id="dj-notas" rows="2" placeholder="Info técnica, extras..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:1rem">
+      <button class="btn btn-full" onclick="cerrarFormDJ()">Cancelar</button>
+      <button class="btn btn-primary btn-full" onclick="guardarDJ()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: PORTERO ═══════════════════════════════════════════════════ -->
+<div id="port-ov" class="rrhh-ov">
+  <div class="rrhh-ov-hdr">
+    <button onclick="cerrarFormPortero()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 8px 0 0;line-height:1">‹</button>
+    <span class="rrhh-ov-title">Turno de porteros</span>
+  </div>
+  <div class="rrhh-form">
+    <div class="rrhh-grid">
+      <div class="field"><label>Local</label>
+        <select class="inp" id="port-local">
+          <option value="">Selecciona...</option>
+          <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+          <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+        </select>
+      </div>
+      <div class="field"><label>Fecha</label><input class="inp" type="date" id="port-fecha"></div>
+      <div class="field"><label>Nº porteros</label><input class="inp" type="number" id="port-num" placeholder="1" min="1" value="1"></div>
+      <div class="field"><label>Hora entrada</label><input class="inp" type="time" id="port-ini"></div>
+      <div class="field"><label>Hora salida</label><input class="inp" type="time" id="port-fin"></div>
+      <div class="field rrhh-gc"><label>Notas</label><input class="inp" id="port-notas" placeholder="Observaciones..."></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:1rem">
+      <button class="btn btn-full" onclick="cerrarFormPortero()">Cancelar</button>
+      <button class="btn btn-primary btn-full" onclick="guardarPortero()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
