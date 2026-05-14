@@ -1730,7 +1730,21 @@ function saveRR(){lsSet('g20_empleados',JSON.stringify(rrEmp));lsSet('g20_contra
 // ── NAVEGACIÓN ──
 function enterModulo(mod){
   document.getElementById('module-selector').style.display='none';
-  if(mod==='agenda'){document.getElementById('main-app').style.display='';cargarDesdeSupabase();}
+  if(mod==='agenda'){
+    const app=document.getElementById('main-app');
+    app.style.display='';
+    app.classList.add('role-oficina');
+    app.classList.remove('role-encargado');
+    const badge=document.getElementById('role-badge');
+    badge.textContent='Oficina';badge.className='role-badge rb-oficina';
+    const tabPanel=document.querySelector('[onclick*="panel"]'),tabCom=document.querySelector('[onclick*="comunicaciones"]');
+    if(tabPanel)tabPanel.style.display='';
+    if(tabCom)tabCom.style.display='';
+    const filLocal=document.getElementById('fil-local');
+    if(filLocal)filLocal.style.display='';
+    renderHistorial();renderPanel();renderComunicaciones();
+    cargarDesdeSupabase();
+  }
   else{document.getElementById('rrhh-app').style.display='';cargarRRHH();}
 }
 function volverSelector(){
