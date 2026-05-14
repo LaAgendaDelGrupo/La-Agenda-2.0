@@ -1464,7 +1464,9 @@ function renderHistorial(){const fL=document.getElementById('fil-local').value,f
   var cancelSec=document.getElementById('cancelados-section');
   if(!cancelSec){cancelSec=document.createElement('div');cancelSec.id='cancelados-section';list.parentNode.insertBefore(cancelSec,list.nextSibling);}
   if(filteredCancelados.length){
-    cancelSec.innerHTML='<div style="font-size:9.5px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 10px;font-family:var(--fd);display:flex;align-items:center;gap:8px">❌ Cancelados ('+filteredCancelados.length+')<span style="flex:1;height:1px;background:var(--red-border)"></span></div>'+filteredCancelados.map(renderCard).join('');
+    const _open=!!window._canceladosOpen;
+    const _chev=_open?'▼':'▶';
+    cancelSec.innerHTML='<div onclick="window._canceladosOpen=!window._canceladosOpen;renderHistorial()" style="font-size:9.5px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:0.1em;margin:20px 0 10px;font-family:var(--fd);display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">'+_chev+' Cancelados ('+filteredCancelados.length+')<span style="flex:1;height:1px;background:var(--red-border)"></span><span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">'+(_open?'Ocultar':'Mostrar')+'</span></div>'+(_open?filteredCancelados.map(renderCard).join(''):'');
     cancelSec.style.display='';
   } else {cancelSec.innerHTML='';cancelSec.style.display='none';}
   }
