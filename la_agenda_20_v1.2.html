@@ -775,19 +775,12 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 
   <!-- PANEL -->
   <div id="tab-panel" class="section">
-    <div class="metric-grid" id="metrics"></div>
-    <div id="cobros-wrap"></div>
-    <div class="upcoming-section" id="upcoming-section" style="display:none">
-      <div class="upcoming-title">⚡ Próximos 7 días</div>
-      <div id="upcoming-list"></div>
-    </div>
-    <div class="chart-section" id="semana-section">
-      <div class="chart-title">Personas esta semana · por local</div>
-      <div id="chart-semana"></div>
-    </div>
-    <div class="chart-section"><div class="chart-title">Eventos por local</div><div id="chart-local"></div></div>
-    <div class="chart-section"><div class="chart-title">Eventos por estado</div><div id="chart-estado"></div></div>
-    <div class="chart-section"><div class="chart-title">Tipos de consumición</div><div id="chart-cons"></div></div>
+    <div id="panel-nav" style="display:flex;align-items:center;gap:8px;margin-bottom:10px"></div>
+    <div id="panel-nav-volver" style="display:none;text-align:center;margin:-4px 0 14px"><button onclick="panelWeekOffset=0;renderPanel()" style="font-size:11px;color:var(--gold);background:none;border:none;cursor:pointer;font-family:var(--font);font-weight:700;padding:0">↩ Volver a esta semana</button></div>
+    <div class="metric-grid" id="panel-week-metrics" style="margin-bottom:16px"></div>
+    <div id="panel-fds"></div>
+    <div id="panel-lunjue"></div>
+    <div id="panel-stats"></div>
   </div>
 
   <!-- COMUNICACIONES -->
