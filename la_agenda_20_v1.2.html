@@ -1606,9 +1606,9 @@ function duplicarEvento(id){
   editingId=null;
   const localEl=document.getElementById('f-local');if(localEl)localEl.value=e.local||'';
   populateEncargados();
-  const m={'f-nombre':e.nombre,'f-tel':e.tel,'f-local':e.local,'f-zona':e.zona,'f-tipo':e.tipo,'f-fecha':'','f-ini':e.horaIni,'f-fin':e.horaFin,'f-personas':e.personas,'f-encargado':e.encargado,'f-tel-encargado':e.telEncargado||'','f-tramitador':e.tramitador,'f-estado':'Pendiente','f-cons':e.cons,'f-cons-otro':e.consOtro||'','f-tickets':e.tickets||'','f-menu':e.menu,'f-obs-cons':e.obsCons,'f-precio':e.precio,'f-senal':'','f-pago-senal':e.pagoSenal,'f-pago-rest':e.pagoRest,'f-obs':e.obs,'f-excl-ini':e.exclIni||'','f-excl-fin':e.exclFin||''};
+  const m={'f-nombre':e.nombre,'f-tel':e.tel,'f-local':e.local,'f-zona':e.zona,'f-tipo':e.tipo,'f-fecha':'','f-ini':e.horaIni,'f-fin':e.horaFin,'f-personas':e.personas,'f-encargado':e.encargado,'f-tel-encargado':e.telEncargado||'','f-tramitador':e.tramitador,'f-estado':'Pendiente','f-origen':e.origen||'','f-origen-nombre':e.origenNombre||'','f-cons':e.cons,'f-cons-otro':e.consOtro||'','f-tickets':e.tickets||'','f-menu':e.menu,'f-obs-cons':e.obsCons,'f-precio':e.precio,'f-senal':'','f-pago-senal':e.pagoSenal,'f-pago-rest':e.pagoRest,'f-obs':e.obs,'f-excl-ini':e.exclIni||'','f-excl-fin':e.exclFin||''};
   Object.entries(m).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val||'';});
-  onEncargadoChange();setExcl(e.exclusividad||'no');limpiarErrores();checkConsOtro();checkAforo();
+  onEncargadoChange();setExcl(e.exclusividad||'no');checkOrigen();limpiarErrores();checkConsOtro();checkAforo();
   tpvHint('f-pago-senal','hint-senal');tpvHint('f-pago-rest','hint-rest');calcRestante();
   closeModal();
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));
