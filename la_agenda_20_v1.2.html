@@ -621,6 +621,21 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
       <input id="f-tel-encargado" type="hidden" value="">
       <div class="field"><label>Tramitado por</label><input id="f-tramitador" type="text" placeholder="Quién lo gestiona desde oficina"></div>
       <div class="field">
+        <label>Origen del evento</label>
+        <select id="f-origen" onchange="checkOrigen()">
+          <option value="">Sin especificar</option>
+          <option value="RRPP">RRPP</option>
+          <option value="Empleado">Empleado</option>
+          <option value="WhatsApp Business">WhatsApp Business</option>
+          <option value="Konvo">Konvo</option>
+          <option value="Directo">Directo / Orgánico</option>
+        </select>
+      </div>
+      <div class="field" id="origen-nombre-wrap" style="display:none">
+        <label>Nombre <span class="field-opt">(RRPP o empleado)</span></label>
+        <input id="f-origen-nombre" type="text" placeholder="Nombre del RRPP o empleado">
+      </div>
+      <div class="field">
         <label>Estado</label>
         <select id="f-estado">
           <option>Confirmado</option><option>Señalizado</option><option>Pendiente</option><option>En curso</option><option>Cancelado</option>
