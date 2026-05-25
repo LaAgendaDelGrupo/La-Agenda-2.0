@@ -1479,7 +1479,9 @@ function renderPanel(){
   const now=new Date(),todayStr=today(),evVis=getEventosVisibles();
   const {desde,hasta}=getSemanaRange(panelWeekOffset);
   const lunesD=new Date(desde+'T00:00:00');
-  const dias=Array.from({length:7},(_,i)=>{const d=new Date(lunesD);d.setDate(lunesD.getDate()+i);return d.toISOString().slice(0,10);});
+  const _pad=n=>String(n).padStart(2,'0');
+  const _localISO=d=>`${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
+  const dias=Array.from({length:7},(_,i)=>{const d=new Date(lunesD);d.setDate(lunesD.getDate()+i);return _localISO(d);});
   const [lun,mar,mie,jue,vie,sab,dom]=dias;
   const fmtC=d=>{const[,m,dd]=d.split('-');return`${parseInt(dd)} ${MESES_S[parseInt(m)-1]}`;};
   const semLabel=`${fmtC(desde)} — ${fmtC(hasta)}`;
