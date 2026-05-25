@@ -1302,6 +1302,8 @@ const S_ICONS={Confirmado:'✅',Señalizado:'🔵',Pendiente:'🟡','En curso':'
 const EQ_CLS={Confirmado:'eq-confirmado',Señalizado:'eq-senalizado',Pendiente:'eq-pendiente','En curso':'eq-encurso',Cancelado:'eq-cancelado'};
 const ESTADOS=['Confirmado','Señalizado','Pendiente','En curso','Cancelado'];
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+let panelWeekOffset=0;
+function panelNavSemana(dir){panelWeekOffset+=dir;renderPanel();}
 
 const save=()=>{lsSet('g20_eventos',JSON.stringify(eventos));lsSet('g20_eliminados',JSON.stringify(eliminados));};
 const v=id=>(document.getElementById(id)||{}).value||'';
