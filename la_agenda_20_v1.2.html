@@ -2298,6 +2298,337 @@ function enviarHorarioWA(){
   window.open('https://wa.me/'+(tel||'')+`?text=${encodeURIComponent(msg)}`,'_blank');
 }
 
+// ── VACACIONES ──────────────────────────────────────────────────────────────
+const VAC_TIPOS={
+  vacaciones:{label:'Vacaciones',color:'var(--gold)',pill:'VAC'},
+  baja_medica:{label:'Baja médica',color:'var(--red)',pill:'IT'},
+  permiso_matrimonio:{label:'Matrimonio',color:'var(--purple)',pill:'MAT'},
+  permiso_fallecimiento:{label:'Fallecimiento',color:'var(--blue)',pill:'FAL'},
+  permiso_enfermedad_familiar:{label:'Enf. familiar',color:'var(--amber)',pill:'ENF'},
+  permiso_mudanza:{label:'Mudanza',color:'var(--green)',pill:'MUD'},
+  permiso_medico:{label:'Cita médica',color:'var(--green)',pill:'MED'},
+  maternidad:{label:'Maternidad/Pat.',color:'var(--purple)',pill:'MAT'},
+  otro:{label:'Otro',color:'var(--text2)',pill:'OTR'},
+};
+function vacTipoLabel(t){return(VAC_TIPOS[t]||{label:t}).label;}
+function vacTipoColor(t){return(VAC_TIPOS[t]||{color:'var(--text2)'}).color;}
+function vacTipoPill(t){return(VAC_TIPOS[t]||{pill:'?'}).pill;}
+
+function diasNaturales(ini,fin){
+  if(!ini||!fin)return 0;
+  const d=Math.round((new Date(fin+'T00:00:00')-new Date(ini+'T00:00:00'))/86400000)+1;
+  return Math.max(0,d);
+}
+
+function vacDiasAsignados(emp,año){
+  if(!emp.fecha_alta)return 30;
+  const alta=new Date(emp.fecha_alta+'T00:00:00');
+  if(alta.getFullYear()>año)return 0;
+  if(alta.getFullYear()<año)return 30;
+  const finAño=new Date(año,11,31);
+  return Math.round(30*Math.max(0,Math.round((finAño-alta)/86400000)+1)/365);
+}
+
+function vacDiasDisfrutados(empId,año){
+  return rrVac
+    .filter(v=>v.empleado_id===empId&&v.tipo==='vacaciones'&&v.estado==='aprobado'&&(v.fecha_inicio||'').slice(0,4)===String(año))
+    .reduce((s,v)=>s+(v.dias_naturales||0),0);
+}
+
+function renderVacaciones(){
+  const fL=document.getElementById('vac-fil-local').value;
+  const fA=parseInt(document.getElementById('vac-fil-año').value)||new Date().getFullYear();
+
+  // Pendientes de aprobación
+  const pendWrap=document.getElementById('vac-pendientes-wrap');
+  const pendList=document.getElementById('vac-pendientes-list');
+  const solicitadas=rrVac.filter(v=>v.estado==='solicitado'&&(!fL||(rrEmp.find(e=>e.id===v.empleado_id)||{}).local===fL));
+  if(solicitadas.length){
+    pendWrap.style.display='';
+    pendList.innerHTML=solicitadas.map(v=>{
+      const emp=rrEmp.find(e=>e.id===v.empleado_id);
+      const color=vacTipoColor(v.tipo);
+      return`<div class="vac-sol-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-weight:700;font-size:13px">${emp?emp.nombre+' '+emp.apellidos:'—'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px"><span style="color:${color};font-weight:600">${vacTipoLabel(v.tipo)}</span> · ${fmtD(v.fecha_inicio)} → ${fmtD(v.fecha_fin)} · <strong>${v.dias_naturales}d</strong></div>
+            ${v.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${v.notas}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+            <button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:var(--green-border)" onclick="cambiarEstadoVac(${v.id},'aprobado')">✓ Aprobar</button>
+            <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="cambiarEstadoVac(${v.id},'denegado')">✗ Denegar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }else{pendWrap.style.display='none';}
+
+  // Resumen por empleado
+  let emps=[...rrEmp].filter(e=>!fL||e.local===fL).sort((a,b)=>((a.local||'')+(a.apellidos||'')).localeCompare((b.local||'')+(b.apellidos||'')));
+  const cont=document.getElementById('vac-emp-list');
+  if(!emps.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin empleados con estos filtros</div>';
+  }else{
+    cont.innerHTML=emps.map(e=>{
+      const asignados=vacDiasAsignados(e,fA);
+      const disfrutados=vacDiasDisfrutados(e.id,fA);
+      const pendientes=Math.max(0,asignados-disfrutados);
+      const pct=asignados>0?Math.min(100,Math.round(disfrutados/asignados*100)):0;
+      const barColor=pct>=90?'var(--red)':pct>=70?'var(--amber)':'var(--green)';
+      const color=LC[e.local]||'var(--text3)';
+      const nSols=rrVac.filter(v=>v.empleado_id===e.id&&v.estado==='solicitado').length;
+      return`<div class="vac-emp-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <div style="font-family:var(--fd);font-size:13px;text-transform:uppercase;letter-spacing:.03em">${e.nombre||''} ${e.apellidos||''}</div>
+            <div style="font-size:11.5px;color:var(--text2);margin-top:2px"><span style="color:${color};font-weight:600">${e.local||'—'}</span> · ${e.puesto||'—'}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:9px;color:var(--text3)">${pct}% de ${fA}</div>
+            <div class="vac-bar-track" style="width:72px"><div class="vac-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+          </div>
+        </div>
+        <div class="vac-counters">
+          <div class="vac-counter"><div class="vac-counter-num">${asignados}</div><div class="vac-counter-lbl">Asignados</div></div>
+          <div class="vac-counter"><div class="vac-counter-num" style="color:var(--green)">${disfrutados}</div><div class="vac-counter-lbl">Disfrutados</div></div>
+          <div class="vac-counter"><div class="vac-counter-num" style="color:${pendientes===0?'var(--text3)':'var(--amber)'}">${pendientes}</div><div class="vac-counter-lbl">Pendientes</div></div>
+        </div>
+        ${nSols?`<div style="font-size:11px;color:var(--amber);margin-bottom:6px">⏳ ${nSols} solicitud${nSols>1?'es':''} pendiente${nSols>1?'s':''} de aprobación</div>`:''}
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" style="flex:1" onclick="abrirDetVac(${e.id})">📋 Historial</button>
+          <button class="btn btn-sm btn-primary" style="flex:1" onclick="abrirFormVac(null,${e.id})">+ Solicitud</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  renderVacCal(fL);
+}
+
+function renderVacCal(fL){
+  const{desde,hasta}=getSemanaRange(_vacWeekOffset);
+  const lunesD=new Date(desde+'T00:00:00');
+  const _p=n=>String(n).padStart(2,'0');
+  const dias=Array.from({length:7},(_,i)=>{const d=new Date(lunesD);d.setDate(lunesD.getDate()+i);return`${d.getFullYear()}-${_p(d.getMonth()+1)}-${_p(d.getDate())}`;});
+  const[dP,hP]=[desde.split('-'),hasta.split('-')];
+  document.getElementById('vac-cal-header').textContent=`${parseInt(dP[2])} ${MESES_S[parseInt(dP[1])-1]} — ${parseInt(hP[2])} ${MESES_S[parseInt(hP[1])-1]}`;
+  const todayStr=today();
+  const DIAS=['L','M','X','J','V','S','D'];
+
+  const ausencias=rrVac.filter(v=>v.estado!=='denegado'&&v.fecha_inicio&&v.fecha_fin&&v.fecha_inicio<=hasta&&v.fecha_fin>=desde);
+  const empIds=[...new Set(ausencias.map(v=>v.empleado_id))];
+  let empsAus=empIds.map(id=>rrEmp.find(e=>e.id===id)).filter(Boolean);
+  if(fL)empsAus=empsAus.filter(e=>e.local===fL);
+
+  const wrap=document.getElementById('vac-cal-wrap');
+  if(!empsAus.length){
+    wrap.innerHTML='<div style="text-align:center;color:var(--text3);padding:1.5rem;font-size:13px;background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r)">Sin ausencias esta semana</div>';
+    return;
+  }
+
+  const cols=`90px repeat(7,1fr)`;
+  let html=`<div class="vac-cal-wrap">`;
+  // Cabecera días
+  html+=`<div class="vac-cal-hdr" style="display:grid;grid-template-columns:${cols}">`;
+  html+=`<div style="padding:6px 8px;font-size:9px;color:var(--text3)"></div>`;
+  dias.forEach((d,i)=>{
+    const[,m,dd]=d.split('-'),isT=d===todayStr;
+    html+=`<div style="padding:5px 2px;text-align:center;font-size:9px;font-weight:700;color:${isT?'var(--gold)':'var(--text3)'}">
+      ${DIAS[i]}<br><span style="font-size:10px">${parseInt(dd)}</span></div>`;
+  });
+  html+=`</div>`;
+  // Filas empleados
+  empsAus.forEach(emp=>{
+    const color=LC[emp.local]||'#888';
+    html+=`<div class="vac-cal-row" style="display:grid;grid-template-columns:${cols}">`;
+    html+=`<div style="padding:5px 8px;font-size:10.5px;font-weight:600;color:${color};overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${emp.nombre} ${emp.apellidos}">${emp.nombre||''}</div>`;
+    dias.forEach(d=>{
+      const aus=rrVac.filter(v=>v.empleado_id===emp.id&&v.estado!=='denegado'&&v.fecha_inicio<=d&&v.fecha_fin>=d);
+      if(aus.length){
+        const t=aus[0].tipo,c=vacTipoColor(t);
+        html+=`<div class="vac-cal-cell"><div class="vac-cal-pill" style="background:${c};opacity:.9" title="${vacTipoLabel(t)}">${vacTipoPill(t)}</div></div>`;
+      }else{
+        html+=`<div class="vac-cal-cell"></div>`;
+      }
+    });
+    html+=`</div>`;
+  });
+  // Leyenda
+  const tiposUsados=[...new Set(ausencias.map(v=>v.tipo))];
+  html+=`<div style="padding:8px 10px;display:flex;gap:10px;flex-wrap:wrap;border-top:.5px solid var(--border)">`;
+  tiposUsados.forEach(t=>{
+    html+=`<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)">
+      <div style="width:10px;height:10px;border-radius:2px;background:${vacTipoColor(t)}"></div>${vacTipoLabel(t)}</div>`;
+  });
+  html+=`</div></div>`;
+  wrap.innerHTML=html;
+}
+
+function vacCalNav(dir){_vacWeekOffset+=dir;renderVacCal(document.getElementById('vac-fil-local').value);}
+
+// Formulario solicitud
+function abrirFormVac(id,preEmpId){
+  _eVacId=id;
+  const sel=document.getElementById('vac-emp-sel');
+  sel.innerHTML='<option value="">Selecciona empleado...</option>'+rrEmp.map(e=>`<option value="${e.id}">${e.nombre} ${e.apellidos} — ${e.local||'—'}</option>`).join('');
+  if(id){
+    const v=rrVac.find(x=>x.id===id);
+    if(v){
+      sel.value=v.empleado_id;
+      document.getElementById('vac-tipo').value=v.tipo||'vacaciones';
+      document.getElementById('vac-inicio').value=v.fecha_inicio||'';
+      document.getElementById('vac-fin').value=v.fecha_fin||'';
+      document.getElementById('vac-estado').value=v.estado||'solicitado';
+      document.getElementById('vac-aprobado-por').value=v.aprobado_por||'';
+      document.getElementById('vac-notas').value=v.notas||'';
+      calcVacDias();
+    }
+    document.getElementById('vac-ov-title').textContent='Editar solicitud';
+  }else{
+    ['vac-inicio','vac-fin','vac-aprobado-por','vac-notas'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('vac-tipo').value='vacaciones';
+    document.getElementById('vac-estado').value='solicitado';
+    document.getElementById('vac-dias-wrap').style.display='none';
+    document.getElementById('vac-ov-title').textContent='Nueva solicitud';
+    if(preEmpId)sel.value=preEmpId;
+  }
+  document.getElementById('vac-ov').classList.add('open');
+}
+function cerrarFormVac(){document.getElementById('vac-ov').classList.remove('open');}
+
+function calcVacDias(){
+  const ini=document.getElementById('vac-inicio').value;
+  const fin=document.getElementById('vac-fin').value;
+  const wrap=document.getElementById('vac-dias-wrap');
+  if(ini&&fin&&ini<=fin){document.getElementById('vac-dias-prev').textContent=diasNaturales(ini,fin);wrap.style.display='';}
+  else wrap.style.display='none';
+}
+
+function onVacTipoChange(){
+  // Sugerencia de fechas para permisos con días fijos
+  const tipo=document.getElementById('vac-tipo').value;
+  const diasFijos={permiso_matrimonio:15,permiso_fallecimiento:2,permiso_enfermedad_familiar:5,permiso_mudanza:1};
+  const ini=document.getElementById('vac-inicio').value;
+  if(ini&&diasFijos[tipo]){
+    const fin=new Date(ini+'T00:00:00');
+    fin.setDate(fin.getDate()+diasFijos[tipo]-1);
+    const _p=n=>String(n).padStart(2,'0');
+    document.getElementById('vac-fin').value=`${fin.getFullYear()}-${_p(fin.getMonth()+1)}-${_p(fin.getDate())}`;
+    calcVacDias();
+  }
+}
+
+async function guardarVac(){
+  const eid=parseInt(document.getElementById('vac-emp-sel').value);
+  if(!eid){toast('Selecciona un empleado');return;}
+  const ini=document.getElementById('vac-inicio').value;
+  const fin=document.getElementById('vac-fin').value;
+  if(!ini||!fin){toast('Introduce las fechas');return;}
+  if(ini>fin){toast('La fecha fin debe ser igual o posterior al inicio');return;}
+  const prevEstado=_eVacId?(rrVac.find(x=>x.id===_eVacId)||{}).estado:null;
+  const nuevoEstado=document.getElementById('vac-estado').value;
+  const data={empleado_id:eid,tipo:document.getElementById('vac-tipo').value,fecha_inicio:ini,fecha_fin:fin,dias_naturales:diasNaturales(ini,fin),estado:nuevoEstado,aprobado_por:document.getElementById('vac-aprobado-por').value.trim()||null,notas:document.getElementById('vac-notas').value.trim()||null};
+  try{
+    if(_eVacId){
+      await supaFetch('vacaciones',{method:'PATCH',params:'id=eq.'+_eVacId,body:data,prefer:'return=minimal'});
+      const i=rrVac.findIndex(x=>x.id===_eVacId);if(i>-1)rrVac[i]={...rrVac[i],...data};
+    }else{
+      const r=await supaFetch('vacaciones',{method:'POST',body:data,prefer:'return=representation'});
+      if(r&&r[0])rrVac.unshift(r[0]);
+    }
+    saveRR();cerrarFormVac();renderVacaciones();toast('Solicitud guardada ✓');
+    if(nuevoEstado!==prevEstado&&(nuevoEstado==='aprobado'||nuevoEstado==='denegado'))enviarWAVacaciones(eid,data);
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+async function cambiarEstadoVac(id,nuevoEstado){
+  const v=rrVac.find(x=>x.id===id);if(!v)return;
+  try{
+    await supaFetch('vacaciones',{method:'PATCH',params:'id=eq.'+id,body:{estado:nuevoEstado},prefer:'return=minimal'});
+    v.estado=nuevoEstado;saveRR();renderVacaciones();
+    toast(nuevoEstado==='aprobado'?'✓ Aprobado':'✗ Denegado');
+    enviarWAVacaciones(v.empleado_id,v);
+    if(_vacDetEmpId)abrirDetVac(_vacDetEmpId);
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+async function eliminarVac(id){
+  if(!confirm('¿Eliminar esta solicitud?'))return;
+  try{
+    await supaFetch('vacaciones',{method:'DELETE',params:'id=eq.'+id});
+    rrVac=rrVac.filter(v=>v.id!==id);saveRR();
+    if(_vacDetEmpId)abrirDetVac(_vacDetEmpId);
+    renderVacaciones();toast('Eliminada');
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
+function enviarWAVacaciones(empId,vac){
+  const emp=rrEmp.find(e=>e.id===empId);if(!emp)return;
+  const estadoEmoji=vac.estado==='aprobado'?'✅':'❌';
+  const estadoTexto=vac.estado==='aprobado'?'APROBADA':'DENEGADA';
+  const SEP='─'.repeat(28);
+  const msgEnc=`${estadoEmoji} SOLICITUD ${estadoTexto}\n${SEP}\nEmpleado: ${emp.nombre} ${emp.apellidos}\nLocal: ${emp.local||'—'}\nTipo: ${vacTipoLabel(vac.tipo)}\nFechas: ${fmtD(vac.fecha_inicio)} → ${fmtD(vac.fecha_fin)}\nDías: ${vac.dias_naturales}d naturales${vac.notas?'\nNota: '+vac.notas:''}\n${SEP}\nLa Agenda 2.0 — RRHH`;
+  const telEnc=ENC_TEL[emp.local];
+  if(telEnc)window.open('https://wa.me/'+telEnc+'?text='+encodeURIComponent(msgEnc),'_blank');
+  if(emp.telefono){
+    let tel=(emp.telefono||'').replace(/[^0-9]/g,'');
+    if(tel.length===9&&/^[679]/.test(tel))tel='34'+tel;
+    if(tel.startsWith('0034'))tel=tel.slice(2);
+    if(tel){
+      const nombre1=(emp.nombre||'').split(' ')[0];
+      const msgEmp=`Hola ${nombre1},\n\nTu solicitud ha sido ${estadoTexto.toLowerCase()}:\n${vacTipoLabel(vac.tipo)} · ${fmtD(vac.fecha_inicio)} → ${fmtD(vac.fecha_fin)} (${vac.dias_naturales} días naturales)${vac.notas?'\nNota: '+vac.notas:''}\n\nUn saludo,\nGrupo 2.0 — RRHH`;
+      setTimeout(()=>window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msgEmp),'_blank'),700);
+    }
+  }
+}
+
+// Detalle empleado
+function abrirDetVac(empId){
+  _vacDetEmpId=empId;
+  const emp=rrEmp.find(e=>e.id===empId);if(!emp)return;
+  const fA=parseInt(document.getElementById('vac-fil-año').value)||new Date().getFullYear();
+  document.getElementById('vac-det-title').textContent=(emp.nombre||'')+' '+(emp.apellidos||'');
+  document.getElementById('vac-det-nueva-btn').onclick=()=>{cerrarDetVac();setTimeout(()=>abrirFormVac(null,empId),200);};
+  const asignados=vacDiasAsignados(emp,fA);
+  const disfrutados=vacDiasDisfrutados(empId,fA);
+  const pendientes=Math.max(0,asignados-disfrutados);
+  const pct=asignados>0?Math.min(100,Math.round(disfrutados/asignados*100)):0;
+  const barColor=pct>=90?'var(--red)':pct>=70?'var(--amber)':'var(--green)';
+  document.getElementById('vac-det-counters').innerHTML=`
+    <div style="font-size:10px;color:var(--text3);text-align:right;margin-bottom:4px">Vacaciones ${fA} · ${pct}% usado</div>
+    <div class="vac-bar-track"><div class="vac-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+    <div class="vac-counters">
+      <div class="vac-counter"><div class="vac-counter-num">${asignados}</div><div class="vac-counter-lbl">Asignados</div></div>
+      <div class="vac-counter"><div class="vac-counter-num" style="color:var(--green)">${disfrutados}</div><div class="vac-counter-lbl">Disfrutados</div></div>
+      <div class="vac-counter"><div class="vac-counter-num" style="color:${pendientes===0?'var(--text3)':'var(--amber)'}">${pendientes}</div><div class="vac-counter-lbl">Pendientes</div></div>
+    </div>`;
+  const vacs=rrVac.filter(v=>v.empleado_id===empId).sort((a,b)=>(b.fecha_inicio||'').localeCompare(a.fecha_inicio||''));
+  const det=document.getElementById('vac-det-list');
+  if(!vacs.length){
+    det.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin solicitudes registradas</div>';
+  }else{
+    const estadoCls={aprobado:'b-confirmado',solicitado:'b-pendiente',denegado:'b-cancelado'};
+    det.innerHTML=vacs.map(v=>`<div class="vac-det-row">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div style="font-size:12.5px;font-weight:700;color:${vacTipoColor(v.tipo)}">${vacTipoLabel(v.tipo)}</div>
+        <span class="badge ${estadoCls[v.estado]||''}">${v.estado}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2)">${fmtD(v.fecha_inicio)} → ${fmtD(v.fecha_fin)} · <strong>${v.dias_naturales}d naturales</strong></div>
+      ${v.aprobado_por?`<div style="font-size:11px;color:var(--text3);margin-top:2px">Por: ${v.aprobado_por}</div>`:''}
+      ${v.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${v.notas}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        ${v.estado!=='aprobado'?`<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:var(--green-border)" onclick="cambiarEstadoVac(${v.id},'aprobado')">✓ Aprobar</button>`:''}
+        ${v.estado!=='denegado'?`<button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="cambiarEstadoVac(${v.id},'denegado')">✗ Denegar</button>`:''}
+        <button class="btn btn-sm" onclick="abrirFormVac(${v.id})">✏️ Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="eliminarVac(${v.id})">🗑</button>
+      </div>
+    </div>`).join('');
+  }
+  document.getElementById('vac-det-ov').classList.add('open');
+}
+function cerrarDetVac(){document.getElementById('vac-det-ov').classList.remove('open');_vacDetEmpId=null;}
+
 iniciarRealtime();
 </script>
 </body>
