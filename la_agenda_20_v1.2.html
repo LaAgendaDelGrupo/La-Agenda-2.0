@@ -333,6 +333,22 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
 .nom-row{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .dj-card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:10px;}
 .port-row{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.vac-emp-card{background:var(--bg2);border:.5px solid var(--border);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:10px;transition:border-color .2s;}
+.vac-emp-card:hover{border-color:var(--gold);}
+.vac-bar-track{height:5px;background:var(--bg4);border-radius:4px;overflow:hidden;margin:6px 0 4px;}
+.vac-bar-fill{height:100%;border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1);}
+.vac-counters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0 10px;}
+.vac-counter{background:var(--bg3);border-radius:8px;padding:8px 4px;text-align:center;}
+.vac-counter-num{font-family:var(--fd);font-size:18px;color:var(--gold);line-height:1;}
+.vac-counter-lbl{font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+.vac-sol-card{background:var(--amber-bg);border:.5px solid var(--amber-border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;}
+.vac-cal-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:1rem;}
+.vac-cal-hdr{display:grid;border-bottom:.5px solid var(--border);}
+.vac-cal-row{display:grid;border-bottom:.5px solid var(--border);align-items:center;}
+.vac-cal-row:last-child{border-bottom:none;}
+.vac-cal-cell{padding:3px 2px;text-align:center;}
+.vac-cal-pill{height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#111;letter-spacing:.04em;}
+.vac-det-row{background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;}
 @media(min-width:768px){
   .rrhh-section{padding:2.5rem 3rem 5rem;}
   .rrhh-grid{grid-template-columns:1fr 1fr 1fr;}
