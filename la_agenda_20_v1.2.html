@@ -1279,6 +1279,69 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
   </div>
 </div>
 
+<!-- ══ OVERLAY: VACACIONES SOLICITUD ════════════════════════════════════ -->
+<div id="vac-ov" class="rrhh-ov">
+  <div class="rrhh-ov-hdr">
+    <button onclick="cerrarFormVac()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 8px 0 0;line-height:1">‹</button>
+    <span class="rrhh-ov-title" id="vac-ov-title">Nueva solicitud</span>
+  </div>
+  <div class="rrhh-form">
+    <div class="rrhh-grid">
+      <div class="field rrhh-gc"><label>Empleado</label>
+        <select class="inp" id="vac-emp-sel"><option value="">Selecciona empleado...</option></select>
+      </div>
+      <div class="field rrhh-gc"><label>Tipo de ausencia</label>
+        <select class="inp" id="vac-tipo" onchange="onVacTipoChange()">
+          <option value="vacaciones">🌴 Vacaciones</option>
+          <option value="baja_medica">🏥 Baja médica (IT)</option>
+          <option value="permiso_matrimonio">💍 Matrimonio / Pareja de hecho (15d)</option>
+          <option value="permiso_fallecimiento">🕊 Fallecimiento familiar (2d)</option>
+          <option value="permiso_enfermedad_familiar">❤️ Enfermedad familiar grave (5d)</option>
+          <option value="permiso_mudanza">📦 Mudanza (1d)</option>
+          <option value="permiso_medico">🩺 Cita médica</option>
+          <option value="maternidad">👶 Maternidad / Paternidad</option>
+          <option value="otro">📋 Otro</option>
+        </select>
+      </div>
+      <div class="field"><label>Fecha inicio</label><input class="inp" type="date" id="vac-inicio" oninput="calcVacDias()"></div>
+      <div class="field"><label>Fecha fin</label><input class="inp" type="date" id="vac-fin" oninput="calcVacDias()"></div>
+      <div class="field rrhh-gc" id="vac-dias-wrap" style="display:none">
+        <div style="background:var(--bg3);border:.5px solid var(--border);border-radius:var(--r);padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text2)">Días naturales</span>
+          <span id="vac-dias-prev" style="font-family:var(--fd);font-size:22px;color:var(--gold)">0</span>
+        </div>
+      </div>
+      <div class="field"><label>Estado</label>
+        <select class="inp" id="vac-estado">
+          <option value="solicitado">Solicitado</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="denegado">Denegado</option>
+        </select>
+      </div>
+      <div class="field"><label>Aprobado por</label><input class="inp" id="vac-aprobado-por" placeholder="Nombre"></div>
+      <div class="field rrhh-gc"><label>Notas</label><textarea class="inp" id="vac-notas" rows="2" placeholder="Observaciones..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:1rem">
+      <button class="btn btn-full" onclick="cerrarFormVac()">Cancelar</button>
+      <button class="btn btn-primary btn-full" onclick="guardarVac()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: VACACIONES DETALLE EMPLEADO ══════════════════════════════ -->
+<div id="vac-det-ov" class="rrhh-ov">
+  <div class="rrhh-ov-hdr">
+    <button onclick="cerrarDetVac()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;padding:0 8px 0 0;line-height:1">‹</button>
+    <span class="rrhh-ov-title" id="vac-det-title">Detalle vacaciones</span>
+  </div>
+  <div class="rrhh-form">
+    <div id="vac-det-counters" style="margin-bottom:14px"></div>
+    <div class="section-label">Historial de ausencias</div>
+    <div id="vac-det-list"></div>
+    <button class="btn btn-primary btn-full" id="vac-det-nueva-btn" onclick="" style="margin-top:8px">+ Nueva solicitud</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
