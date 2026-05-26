@@ -1950,18 +1950,21 @@ function rrhhTab(id,el){
 // ── SUPABASE RRHH ──
 async function cargarRRHH(){
   const sync=document.getElementById('rrhh-sync');
+  const safe=async(tabla,params)=>{try{return await supaFetch(tabla,{method:'GET',params});}catch(err){console.warn('RRHH tabla '+tabla+':',err.message);return null;}};
   try{
     const[e,c,n,d,p,va]=await Promise.all([
-      supaFetch('empleados',{method:'GET',params:'order=apellidos.asc'}),
-      supaFetch('contratos',{method:'GET',params:'order=id.asc'}),
-      supaFetch('nominas',{method:'GET',params:'order=año.desc,mes.desc'}),
-      supaFetch('djs',{method:'GET',params:'order=fecha.desc'}),
-      supaFetch('porteros',{method:'GET',params:'order=fecha.desc'}),
-      supaFetch('vacaciones',{method:'GET',params:'order=fecha_inicio.desc'}),
+      safe('empleados','order=apellidos.asc'),
+      safe('contratos','order=id.asc'),
+      safe('nominas','order=id.desc'),
+      safe('djs','order=fecha.desc'),
+      safe('porteros','order=fecha.desc'),
+      safe('vacaciones','order=fecha_inicio.desc'),
     ]);
-    rrEmp=e||[];rrCont=c||[];rrNom=n||[];rrDJ=d||[];rrPort=p||[];rrVac=va||[];
+    if(e)rrEmp=e; if(c)rrCont=c; if(n)rrNom=n; if(d)rrDJ=d; if(p)rrPort=p; if(va)rrVac=va;
+    const anyOk=e||c||n||d||p||va;
     saveRR();renderEmpleados();renderNominas();renderDJs();renderPorteros();
-    sync.textContent='● Sync';sync.style.color='var(--green)';
+    sync.textContent=anyOk?'● Sync':'○ Offline';
+    sync.style.color=anyOk?'var(--green)':'var(--amber)';
   }catch(err){sync.textContent='○ Offline';sync.style.color='var(--amber)';console.warn('RRHH load:',err.message);}
 }
 
