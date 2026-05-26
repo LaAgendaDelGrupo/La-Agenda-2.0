@@ -1950,14 +1950,15 @@ function rrhhTab(id,el){
 async function cargarRRHH(){
   const sync=document.getElementById('rrhh-sync');
   try{
-    const[e,c,n,d,p]=await Promise.all([
+    const[e,c,n,d,p,va]=await Promise.all([
       supaFetch('empleados',{method:'GET',params:'order=apellidos.asc'}),
       supaFetch('contratos',{method:'GET',params:'order=id.asc'}),
       supaFetch('nominas',{method:'GET',params:'order=año.desc,mes.desc'}),
       supaFetch('djs',{method:'GET',params:'order=fecha.desc'}),
       supaFetch('porteros',{method:'GET',params:'order=fecha.desc'}),
+      supaFetch('vacaciones',{method:'GET',params:'order=fecha_inicio.desc'}),
     ]);
-    rrEmp=e||[];rrCont=c||[];rrNom=n||[];rrDJ=d||[];rrPort=p||[];
+    rrEmp=e||[];rrCont=c||[];rrNom=n||[];rrDJ=d||[];rrPort=p||[];rrVac=va||[];
     saveRR();renderEmpleados();renderNominas();renderDJs();renderPorteros();
     sync.textContent='● Sync';sync.style.color='var(--green)';
   }catch(err){sync.textContent='○ Offline';sync.style.color='var(--amber)';console.warn('RRHH load:',err.message);}
