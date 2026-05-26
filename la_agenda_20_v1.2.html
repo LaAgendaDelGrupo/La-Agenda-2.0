@@ -1060,6 +1060,39 @@ body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--b
     </select>
     <div id="rrhh-port-list"></div>
   </div>
+
+  <!-- ══ TAB: VACACIONES ══════════════════════════════════════════════════ -->
+  <div id="rrhh-tab-vacaciones" class="rrhh-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h2 style="font-family:var(--fd);font-size:16px;text-transform:uppercase;letter-spacing:.05em">Vacaciones</h2>
+      <button class="btn btn-primary btn-sm" onclick="abrirFormVac(null)">+ Solicitud</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select id="vac-fil-local" class="filter-select" style="flex:1;min-width:140px" onchange="renderVacaciones()">
+        <option value="">Todos los locales</option>
+        <option>Las Tablas 2.0</option><option>La Pequeña 2.0</option><option>La Chula 2.0</option>
+        <option>La Traviesa 2.0</option><option>Green 2.0</option><option>La Peluquería 2.0</option><option>Juanita 2.0</option>
+      </select>
+      <select id="vac-fil-año" class="filter-select" style="width:80px" onchange="renderVacaciones()">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <div id="vac-pendientes-wrap" style="display:none;margin-bottom:6px">
+      <div class="section-label">Por aprobar</div>
+      <div id="vac-pendientes-list"></div>
+    </div>
+    <div class="section-label">Resumen por empleado</div>
+    <div id="vac-emp-list"></div>
+    <div class="section-label" style="margin-top:20px">Calendario ausencias</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <button class="btn btn-sm" onclick="vacCalNav(-1)">&#8249;</button>
+      <div id="vac-cal-header" style="flex:1;text-align:center;font-size:11px;color:var(--text2);font-weight:600"></div>
+      <button class="btn btn-sm" onclick="vacCalNav(1)">&#8250;</button>
+    </div>
+    <div id="vac-cal-wrap"></div>
+  </div>
 </div>
 
 <!-- ══ OVERLAY: EMPLEADO ═══════════════════════════════════════════════════ -->
