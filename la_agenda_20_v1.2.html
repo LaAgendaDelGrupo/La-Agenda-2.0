@@ -1981,26 +1981,42 @@ function renderEmpleados(){
   });
   const cont=document.getElementById('rrhh-emp-list');
   if(!list.length){cont.innerHTML='<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin empleados. Pulsa + Nuevo para añadir.</div>';return;}
-  cont.innerHTML=list.map(e=>{
+  const activos=list.filter(e=>e.estado!=='baja');
+  const bajas=list.filter(e=>e.estado==='baja');
+  const renderCard=e=>{
     const cons=rrCont.filter(c=>c.empleado_id===e.id);
     const liq=cons.length?cons.map(c=>Number(c.liquido_base||0).toFixed(2)+'€').join(' + '):'';
-    return`<div class="emp-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div class="emp-card-name">${e.nombre||''} ${e.apellidos||''}</div>
-        <span class="eb ${e.estado==='baja'?'eb-baja':'eb-activo'}">${e.estado||'activo'}</span>
+    const esBaja=e.estado==='baja';
+    return`<div class="emp-card" style="${esBaja?'opacity:.65;border-color:var(--red-border)':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div class="emp-card-name" style="${esBaja?'text-decoration:line-through;color:var(--text3)':''}">${e.nombre||''} ${e.apellidos||''}</div>
+        <span class="eb ${esBaja?'eb-baja':'eb-activo'}">${esBaja?'Baja':'Activo'}</span>
       </div>
       <div class="emp-card-meta">
         <span style="color:${LC[e.local]||'var(--text3)'};font-weight:600">${e.local||'—'}</span>
         <span>·</span><span>${e.puesto||'—'}</span>
       </div>
-      ${liq?`<div class="emp-card-liquido">💶 ${liq}</div>`:''}
+      ${liq&&!esBaja?`<div class="emp-card-liquido">💶 ${liq}</div>`:''}
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
         <button class="btn btn-sm" onclick="abrirFormEmp(${e.id})">✏️ Editar</button>
-        <button class="btn btn-sm" style="background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)" onclick="abrirFormNom(null,${e.id})">💶 Nómina</button>
-        <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="eliminarEmp(${e.id})">🗑</button>
+        ${!esBaja?`<button class="btn btn-sm" style="background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)" onclick="abrirFormNom(null,${e.id})">💶 Nómina</button>`:''}
+        ${esBaja
+          ?`<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:var(--green-border)" onclick="toggleEstadoEmp(${e.id},'activo')">↩ Reactivar</button>`
+          :`<button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border)" onclick="toggleEstadoEmp(${e.id},'baja')">Dar de baja</button>`
+        }
+        <button class="btn btn-sm btn-danger" onclick="eliminarEmp(${e.id})">🗑</button>
       </div>
     </div>`;
-  }).join('');
+  };
+  let html=activos.map(renderCard).join('');
+  if(bajas.length){
+    const _open=!!window._bajasEmpOpen;
+    html+=`<div onclick="window._bajasEmpOpen=!window._bajasEmpOpen;renderEmpleados()" style="font-size:9.5px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.1em;margin:18px 0 10px;font-family:var(--fd);display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+      ${_open?'▼':'▶'} Bajas (${bajas.length})<span style="flex:1;height:1px;background:var(--red-border)"></span>
+      <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">${_open?'Ocultar':'Mostrar'}</span></div>`;
+    if(_open)html+=bajas.map(renderCard).join('');
+  }
+  cont.innerHTML=html||'<div style="text-align:center;color:var(--text3);padding:2rem;font-size:13px">Sin empleados con estos filtros</div>';
 }
 
 function abrirFormEmp(id){
