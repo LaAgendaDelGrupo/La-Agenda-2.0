@@ -2079,6 +2079,20 @@ async function guardarEmp(){
   }catch(err){toast('Error: '+err.message.slice(0,60));}
 }
 
+async function toggleEstadoEmp(id,nuevoEstado){
+  const e=rrEmp.find(x=>x.id===id);if(!e)return;
+  const label=nuevoEstado==='baja'?`¿Dar de baja a ${e.nombre} ${e.apellidos||''}?`:`¿Reactivar a ${e.nombre} ${e.apellidos||''}?`;
+  if(!confirm(label))return;
+  try{
+    await supaFetch('empleados',{method:'PATCH',params:'id=eq.'+id,body:{estado:nuevoEstado,fecha_fin:nuevoEstado==='baja'?new Date().toISOString().slice(0,10):null},prefer:'return=minimal'});
+    e.estado=nuevoEstado;
+    if(nuevoEstado==='baja')e.fecha_fin=new Date().toISOString().slice(0,10);
+    else e.fecha_fin=null;
+    saveRR();renderEmpleados();
+    toast(nuevoEstado==='baja'?`${e.nombre} — dado de baja`:`${e.nombre} — reactivado ✓`);
+  }catch(err){toast('Error: '+err.message.slice(0,60));}
+}
+
 async function eliminarEmp(id){
   if(!confirm('¿Eliminar este empleado y todos sus datos?'))return;
   try{
